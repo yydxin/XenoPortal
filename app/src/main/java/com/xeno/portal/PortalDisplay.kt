@@ -50,7 +50,7 @@ object PortalDisplay {
     private var generation = 0
     fun channel(c: Context) {
         c.getSystemService(NotificationManager::class.java).createNotificationChannel(
-            NotificationChannel(CHANNEL, "XenoPortal 分享诊断", NotificationManager.IMPORTANCE_HIGH).apply { description = "仅在用户点击测试显示时发送，8秒收起" }
+            NotificationChannel(CHANNEL, "XenoPortal 图片分享", NotificationManager.IMPORTANCE_HIGH).apply { description = "用户主动取图或测试时显示，用于保存与分享图片" }
         )
     }
     fun query(c: Context, after: (() -> Unit)? = null) {

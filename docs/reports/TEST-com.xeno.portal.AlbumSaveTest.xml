@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="com.xeno.portal.AlbumSaveTest" tests="2" skipped="0" failures="0" errors="0" timestamp="2026-11-11T11:05:35.493Z" hostname="1ec1df0e373f" time="8.568">
+<testsuite name="com.xeno.portal.AlbumSaveTest" tests="2" skipped="0" failures="0" errors="0" timestamp="2026-11-11T11:24:58.874Z" hostname="1ec1df0e373f" time="5.942">
   <properties/>
-  <testcase name="albumActionIsPrivateBroadcastAndSavesOnceWithoutLaunchingActivity" classname="com.xeno.portal.AlbumSaveTest" time="8.377"/>
-  <testcase name="failedWriteDeletesOnlyInsertedPendingRowAndKeepsSourceForRetry" classname="com.xeno.portal.AlbumSaveTest" time="0.19"/>
+  <testcase name="albumActionIsPrivateBroadcastAndSavesOnceWithoutLaunchingActivity" classname="com.xeno.portal.AlbumSaveTest" time="5.845"/>
+  <testcase name="failedWriteDeletesOnlyInsertedPendingRowAndKeepsSourceForRetry" classname="com.xeno.portal.AlbumSaveTest" time="0.096"/>
   <system-out><![CDATA[]]></system-out>
-  <system-err><![CDATA[Intent = Intent { act=com.xeno.portal.SAVE_ALBUM dat=xenoportal://album/... cmp=com.xeno.portal/.AlbumSaveReceiver (has extras) }; Matching wrappers: [Wrapper[receiver=[com.xeno.portal.AlbumSaveReceiver@4708d0c8], context=[android.app.ContextImpl@19452462], intentFilter=[android.content.IntentFilter@4dad873e]]]
-Intent = Intent { act=com.xeno.portal.SAVE_ALBUM dat=xenoportal://album/... cmp=com.xeno.portal/.AlbumSaveReceiver (has extras) }; Matching wrappers: [Wrapper[receiver=[com.xeno.portal.AlbumSaveReceiver@4708d0c8], context=[android.app.ContextImpl@19452462], intentFilter=[android.content.IntentFilter@4dad873e]]]
-Intent = Intent { act=com.xeno.portal.SAVE_ALBUM dat=xenoportal://album/... cmp=com.xeno.portal/.AlbumSaveReceiver (has extras) }; Matching wrappers: [Wrapper[receiver=[com.xeno.portal.AlbumSaveReceiver@4708d0c8], context=[android.app.ContextImpl@19452462], intentFilter=[android.content.IntentFilter@4dad873e]]]
+  <system-err><![CDATA[Intent = Intent { act=com.xeno.portal.SAVE_ALBUM dat=xenoportal://album/... cmp=com.xeno.portal/.AlbumSaveReceiver (has extras) }; Matching wrappers: [Wrapper[receiver=[com.xeno.portal.AlbumSaveReceiver@1e7d89a4], context=[android.app.ContextImpl@61cc28b4], intentFilter=[android.content.IntentFilter@60f522ee]]]
+Intent = Intent { act=com.xeno.portal.SAVE_ALBUM dat=xenoportal://album/... cmp=com.xeno.portal/.AlbumSaveReceiver (has extras) }; Matching wrappers: [Wrapper[receiver=[com.xeno.portal.AlbumSaveReceiver@1e7d89a4], context=[android.app.ContextImpl@61cc28b4], intentFilter=[android.content.IntentFilter@60f522ee]]]
+Intent = Intent { act=com.xeno.portal.SAVE_ALBUM dat=xenoportal://album/... cmp=com.xeno.portal/.AlbumSaveReceiver (has extras) }; Matching wrappers: [Wrapper[receiver=[com.xeno.portal.AlbumSaveReceiver@1e7d89a4], context=[android.app.ContextImpl@61cc28b4], intentFilter=[android.content.IntentFilter@60f522ee]]]
 ]]></system-err>
 </testsuite>

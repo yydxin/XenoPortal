@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="com.xeno.portal.ProbePolicyTest" tests="4" skipped="0" failures="0" errors="0" timestamp="2026-11-11T11:05:51.014Z" hostname="1ec1df0e373f" time="0.007">
+<testsuite name="com.xeno.portal.ProbePolicyTest" tests="4" skipped="0" failures="0" errors="0" timestamp="2026-11-11T11:25:14.867Z" hostname="1ec1df0e373f" time="0.005">
   <properties/>
-  <testcase name="packageLessMenuEventsCanInspectOnlyWhenForegroundEvidenceIsWhitelisted" classname="com.xeno.portal.ProbePolicyTest" time="0.006"/>
+  <testcase name="packageLessMenuEventsCanInspectOnlyWhenForegroundEvidenceIsWhitelisted" classname="com.xeno.portal.ProbePolicyTest" time="0.0"/>
   <testcase name="sessionIdRejectsPathTraversal" classname="com.xeno.portal.ProbePolicyTest" time="0.0"/>
-  <testcase name="ordinaryShareAndMenuNeverAuthorizeSave" classname="com.xeno.portal.ProbePolicyTest" time="0.001"/>
-  <testcase name="unknownPermissionFallsBackEvenOnNewProtocol" classname="com.xeno.portal.ProbePolicyTest" time="0.0"/>
+  <testcase name="ordinaryShareAndMenuNeverAuthorizeSave" classname="com.xeno.portal.ProbePolicyTest" time="0.0"/>
+  <testcase name="unknownPermissionFallsBackEvenOnNewProtocol" classname="com.xeno.portal.ProbePolicyTest" time="0.001"/>
   <system-out><![CDATA[]]></system-out>
   <system-err><![CDATA[]]></system-err>
 </testsuite>

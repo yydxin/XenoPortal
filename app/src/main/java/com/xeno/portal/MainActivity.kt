@@ -14,6 +14,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -74,11 +75,17 @@ private fun PortalScreen(activity: MainActivity, revision: Int) {
     var trees by remember(revision) { mutableStateOf(Preferences.treeEnabled(activity)) }
     var overlay by remember(revision) { mutableStateOf(Preferences.forceOverlay(activity)) }
     var whitelist by remember { mutableStateOf(Preferences.whitelistText(activity)) }
-    var threshold by remember { mutableFloatStateOf(Preferences.threshold(activity).toFloat()) }
     var treeWarning by remember { mutableStateOf(false) }
     var exportWarning by remember { mutableStateOf(false) }
 
     var installed by remember(revision) { mutableStateOf(Sharing.installed(activity)) }
+    val photoPicker = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
+        if(uri!=null) PhotoImport.load(activity,uri)
+    }
+    fun changeEnabled(value:Boolean) {
+        enabled=value;Preferences.set(activity,"enabled",value)
+        if(!value) {DouyinMenuTrials.finish("总开关关闭");PortalActions.cancel();PortalDisplay.close(activity);Preferences.set(activity,"tree",false);trees=false;Diagnostics.updateTree("总开关关闭，已清除文字树预览")}
+    }
     val permissions = rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { result ->
         Diagnostics.log("PERMISSION", result.entries.joinToString { "${it.key}=${it.value}" }); activity.revision++
     }
@@ -87,14 +94,39 @@ private fun PortalScreen(activity: MainActivity, revision: Int) {
         Column(Modifier.safeDrawingPadding()) {
             Column(Modifier.padding(horizontal=20.dp, vertical=12.dp)) {
                 Text("XenoPortal", style=MaterialTheme.typography.headlineLarge)
-                Text("诊断版 2.0.4 · 评论图片选图截图", style=MaterialTheme.typography.bodyMedium)
+                Text("${BuildConfig.VERSION_NAME} · 手动选图测试版", style=MaterialTheme.typography.bodyMedium)
             }
             PrimaryTabRow(selectedTabIndex=tab) {
-                listOf("设置", "验证工具", "诊断").forEachIndexed { index, label -> Tab(selected=tab==index, onClick={tab=index}, text={Text(label)}) }
+                listOf("开始", "设置", "诊断", "开发工具").forEachIndexed { index, label -> Tab(selected=tab==index, onClick={tab=index}, text={Text(label)}) }
             }
             Column(Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(20.dp), verticalArrangement=Arrangement.spacedBy(12.dp)) {
                 when (tab) {
                     0 -> {
+                        Text("选一张图片，保存或分享",style=MaterialTheme.typography.titleLarge)
+                        Text("本版先提供手动取图。自动长按触发正在开发，尚未启用。")
+                        Toggle("启用 XenoPortal", "内容留在本机，只有主动保存或分享才交给对应位置",enabled,::changeEnabled)
+                        Card(Modifier.fillMaxWidth()) {Column(Modifier.padding(16.dp),verticalArrangement=Arrangement.spacedBy(8.dp)) {
+                            Text("抖音评论图片",style=MaterialTheme.typography.titleMedium)
+                            Text("先准备好评论列表。点击开始后，5秒内切回抖音，关闭菜单并停止滚动，再从预览中点选图片。表情包仅截当前帧。")
+                            Text(if(PortalAccessibilityService.active!=null) "无障碍服务已连接" else "需要先在设置中连接无障碍服务")
+                            Button(onClick={PortalActions.commentAfterDelay(activity)},enabled=enabled && PortalAccessibilityService.active!=null,modifier=Modifier.fillMaxWidth()) {Text("开始选取评论图片（5秒后）")}
+                            if(PortalAccessibilityService.active==null) OutlinedButton(onClick={tab=1},modifier=Modifier.fillMaxWidth()) {Text("前往设置授权")}
+                        }}
+                        OutlinedButton(onClick={photoPicker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))},enabled=enabled,modifier=Modifier.fillMaxWidth()) {Text("从系统照片选择图片")}
+                        Text("照片选择无需完整相册读取权限。导入为JPEG静态图片，最长边2048像素；动态图仅第一帧。",style=MaterialTheme.typography.bodySmall)
+                        MediaSessions.current?.let { session ->
+                            PreviewImage(session)
+                            Button(onClick={PortalActions.nativeAfterDelay(activity)},enabled=enabled && Build.VERSION.SDK_INT>=36,modifier=Modifier.fillMaxWidth()) {Text("显示官方系统岛（5秒后）")}
+                            Text("点击后返回桌面或抖音观察。系统岛可见性由系统决定；不支持时查看设置与诊断。",style=MaterialTheme.typography.bodySmall)
+                            OutlinedButton(onClick={try {AlbumSaveReceiver.pending(activity,session,"beta-home").send()} catch(e:Exception) {Diagnostics.exception(7,"发起保存",e)}},enabled=enabled,modifier=Modifier.fillMaxWidth()) {Text("直接保存到相册")}
+                            OutlinedButton(onClick={PortalDisplay.open(activity,session,"more","beta-home")},enabled=enabled,modifier=Modifier.fillMaxWidth()) {Text("选择分享目标")}
+                        }
+                        Text(Diagnostics.stages.getValue(4).detail,style=MaterialTheme.typography.bodySmall)
+                        Text(NativeLiveUpdates.status,style=MaterialTheme.typography.bodySmall)
+                        OutlinedButton(onClick={PortalActions.cancel();PortalDisplay.close(activity)},modifier=Modifier.fillMaxWidth()) {Text("停止取图并收起")}
+                        Text("保存位置：Pictures/XenoPortal。微信/QQ需要选择聊天，其他目标接收能力需真机确认。",style=MaterialTheme.typography.bodySmall)
+                    }
+                    1 -> {
                         Card { Column(Modifier.padding(16.dp), verticalArrangement=Arrangement.spacedBy(8.dp)) {
                             Text("连接与显示", style=MaterialTheme.typography.titleLarge)
                             Text(if (PortalAccessibilityService.active != null) "无障碍服务：已连接" else "无障碍服务：未连接")
@@ -108,11 +140,8 @@ private fun PortalScreen(activity: MainActivity, revision: Int) {
                             Text(NativeLiveUpdates.status)
                             Text(NativeLiveUpdates.observation)
                         } }
-                        Toggle("总开关", "开启事件白名单诊断与主动测试；不会自动保存", enabled) {
-                            enabled=it; Preferences.set(activity,"enabled",it)
-                            if (!it) { DouyinMenuTrials.finish("总开关关闭"); PortalActions.cancel(); PortalDisplay.close(activity); Preferences.set(activity,"tree",false); trees=false; Diagnostics.updateTree("总开关关闭，已清除文字树预览") }
-                        }
-                        Toggle("强制使用自绘岛", "官方权限查询失败时也会自动降级；不需要悬浮窗权限", overlay) { overlay=it; Preferences.set(activity,"overlay",it) }
+                        Toggle("总开关", "开启手动取图与分享；不会自动点抖音保存",enabled,::changeEnabled)
+                        Toggle("强制使用自绘岛", "仅影响旧焦点协议测试入口；首页官方系统岛入口不会自动改为自绘", overlay) { overlay=it; Preferences.set(activity,"overlay",it) }
                         Text("权限向导", style=MaterialTheme.typography.titleLarge)
                         OutlinedButton(onClick={activity.openSettings(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))}, Modifier.fillMaxWidth()) { Text("打开无障碍设置") }
                         Text("侧载安装后如系统禁止启用：应用信息 → 右上角菜单 → 允许受限制的设置；是否出现该项取决于系统。应用无法可靠判断具体拦截原因。")
@@ -126,17 +155,15 @@ private fun PortalScreen(activity: MainActivity, revision: Int) {
                         OutlinedButton(onClick={activity.openSettings(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,Uri.parse("package:${activity.packageName}")))}, Modifier.fillMaxWidth()) { Text("应用信息 / 自启动 / 后台与省电设置") }
                         Text("HyperOS 中按需要手动检查自启动、后台弹出界面与电池无限制；入口随系统版本变化。服务被终止时，设置页与 S0 会提示未连接。")
                         HorizontalDivider()
-                        Text("取图模式：本版为诊断手动模式", style=MaterialTheme.typography.titleLarge)
-                        Text("快速模式（触摸触发 + 节点裁剪）：未启用。屏幕分辨率，视频只能取当前帧。\n原图模式（自动点保存 + MediaStore 关联）：未启用。会产生相册副本；须先通过普通分享不误保存测试。\n本版不申请触摸探索，不回放或接管手势。")
-                        Text("未来触发阈值：${threshold.toInt()} ms（仅保存配置，本版不启用）")
-                        Slider(value=threshold,onValueChange={threshold=it}, valueRange=250f..500f, steps=4,onValueChangeFinished={Preferences.threshold(activity,threshold.toInt())})
+                        Text("取图模式：手动选择图片", style=MaterialTheme.typography.titleLarge)
+                        Text("本版支持评论列表手动选图截图、系统照片选择。自动长按、自动点保存、原文件与视频提取尚未启用；不申请触摸探索或回放手势。")
                         OutlinedTextField(value=whitelist,onValueChange={whitelist=it},label={Text("事件白名单（每行一个包名）")},modifier=Modifier.fillMaxWidth(),minLines=4)
                         Button(onClick={Preferences.whitelist(activity,whitelist); Diagnostics.log("CONFIG","已保存白名单，共${Preferences.whitelist(activity).size}项")}) { Text("保存白名单") }
                         Text("分享目标固定顺序", style=MaterialTheme.typography.titleLarge)
                         Sharing.targets.forEach { target -> Text("${Sharing.targets.indexOf(target)+1}. ${target.name} · ${if (target in installed) "已安装/本地功能" else "未安装或设备不可见，分享时隐藏"}") }
                         Text("已安装不代表支持图片/视频 ACTION_SEND。微信/QQ 需要用户选择聊天；互传和 AI 接收能力待真机验证。")
                     }
-                    1 -> {
+                    3 -> {
                         Text("独立验证显示与分享", style=MaterialTheme.typography.titleLarge)
                         Text("先使用合成图测试岛和分享，避免把显示失败误判成触发失败。所有截图和文件仅留在本机缓存。")
                         Button(onClick={MediaSessions.sample(activity)}, Modifier.fillMaxWidth()) { Text("生成本地合成测试图片") }

@@ -1,23 +1,22 @@
-# 诊断版结构与当前边界
+# 0.0.1-beta.1 架构与边界
 
-包名 com.xeno.portal，minSdk 33，target/compileSdk 36，Kotlin + Compose。与官方应用使用不同包名与签名。无网络、悬浮窗或前台服务权限。
+com.xeno.portal，minSdk33，target/compileSdk36，Kotlin/Compose。无网络、悬浮窗或前台服务权限；无Root/Shizuku/触摸探索。
 
-| 模块 | 当前职责 |
+| 模块 | 职责 |
 |---|---|
-| PortalApp / Diagnostics | 初始化、进程状态、最近200行持久日志、S0～S7独立状态、崩溃记录恢复、导出 |
-| PortalAccessibilityService | 全类型事件、白名单过滤、所有可读窗口的受限采样、主动截图；不执行节点点击 |
-| ProbePolicy | 保守显示路由、菜单候选、自动保存恒禁用、会话标识校验 |
-| MediaSessions | 合成图/截图、私有缓存、会话租期、用户主动保存本应用图片到相册 |
-| PortalDisplay | 查询焦点协议/权限、官方通知探针、TYPE_ACCESSIBILITY_OVERLAY、单通知id/8秒收起、取消过期请求 |
-| Sharing / ShareActivity | 设备查询已安装目标、固定顺序、显式包 ACTION_SEND、系统面板降级、FileProvider授权 |
-| MainActivity | 设置、权限入口、验证工具、诊断；深浅色跟随系统 |
+| MainActivity | 首页取图/保存/分享、设置、诊断、独立开发工具 |
+| PhotoImport | 系统照片选择URI，最多25MiB读取，软件解码至最长边2048，JPEG静态帧缓存 |
+| PortalAccessibilityService | 服务状态、全窗口有界读取、限频与补采样、用户主动截图；不点击第三方节点 |
+| CommentImagePicker | 已知评论上下文与可见图片候选，前后位置/旋转/尺寸检查，先截图后手动选择 |
+| NativeLiveUpdates | Android16公开提升请求，查询权限和系统返回标志，单通知更新/30秒取消 |
+| PortalDisplay | 历史小米焦点协议探针、可选自绘测试、统一取消 |
+| AlbumSaveReceiver | 非导出不可变PendingIntent，用户点击后直接保存，不启动Activity |
+| MediaSessions | 私有JPEG会话、分享租期、保存并发保护、MediaStore pending写入及失败清理 |
+| Sharing / ShareActivity | 固定目标、查询安装、包限定ACTION_SEND、FileProvider授权与系统面板降级 |
+| Diagnostics / DouyinMenuTrials | 最近200行日志、S0～S7、全受限窗口树、三组独立证据、导出与大报告摘要 |
 
-显示与内容提取独立。手动全屏截图和合成图的 S4 成功，不能算作抖音长按图片取图通过。官方通知的 S5 记录提交结果，岛实际可见性需人工确认。S7 的“已提交”只说明启动分享请求，不能代替接收确认。
+照片导入不依赖无障碍；评论截图依赖服务和抖音真实节点。两条路径都由用户主动操作，当前不实现自动长按。临时选图窗口只是选择界面，不冒充官方岛。系统是否提升、HyperOS是否显示、接收方是否成功接收，分别记录并以真机为准。
 
-诊断版刻意没有启用以下生产路径：TouchInteractionController 输入控制、Shizuku、Root/LSPosed、自动长按、自动节点点击保存、MediaStore外部原文件关联、视频/动态照片提取、官方文件拖拽。不能把预留阈值配置解释为这些能力已经实现。
+截图、图像解码、缓存写入、分享租期与取消保持分离。只有选中或导入图片才写私有缓存，只有用户点保存才写相册。未共享会话到期清理，已共享会话保留最长10分钟供读取；进程被杀时不能保证销毁回调，下次启动清理过期文件。FileProvider仅暴露sessions和diagnostics子目录。
 
-异常捕获覆盖平台调用；进程被系统直接杀死无法保证执行销毁回调，下一次打开根据服务实例和缓存时间恢复状态。临时文件不上传。FileProvider 只暴露 sessions 和 diagnostics 两个 cache 子目录。
-
-分享缓存存在接收端延迟读取需求：分享页取得会话后取消显示超时；分享启动后不立刻删除文件。会话读取有效期10分钟，进程存活时定时清理，终止后下次打开清扫。外部接收端并无通用发送完成回执；“立即清除缓存”可能打断未完成的读取。
-
-下一步真机入口：先验 S0/S1 与窗口快照，导出抖音长按图和普通分享面板的对照，再决定 T2 能否安全自动化。T1 的任何输入控制实验应是另外一轮明确标注的实验构建，不在此版默认开启。
+当前已知评论行id/fmu上下文来自设备日志，图片祖先关系仍需真机验证；不满足则阻断，不泛化为所有ImageView。节点bounds不是原触点。自动长按、自动第三方保存、外部MediaStore原文件关联、视频提取和官方文件拖拽仍未启用。

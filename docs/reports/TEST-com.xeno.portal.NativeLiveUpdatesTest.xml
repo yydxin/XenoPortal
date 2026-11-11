@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="com.xeno.portal.NativeLiveUpdatesTest" tests="2" skipped="0" failures="0" errors="0" timestamp="2026-11-11T11:05:45.481Z" hostname="1ec1df0e373f" time="5.53">
+<testsuite name="com.xeno.portal.NativeLiveUpdatesTest" tests="2" skipped="0" failures="0" errors="0" timestamp="2026-11-11T11:25:05.783Z" hostname="1ec1df0e373f" time="9.043">
   <properties/>
-  <testcase name="requestUsesPublicNativeContractWithoutClaimingPromotionOrMiuiIdentity" classname="com.xeno.portal.NativeLiveUpdatesTest" time="5.487"/>
-  <testcase name="promotionPermissionIsDeclaredSeparatelyFromRuntimeNotificationPermission" classname="com.xeno.portal.NativeLiveUpdatesTest" time="0.043"/>
+  <testcase name="requestUsesPublicNativeContractWithoutClaimingPromotionOrMiuiIdentity" classname="com.xeno.portal.NativeLiveUpdatesTest" time="8.841"/>
+  <testcase name="promotionPermissionIsDeclaredSeparatelyFromRuntimeNotificationPermission" classname="com.xeno.portal.NativeLiveUpdatesTest" time="0.2"/>
   <system-out><![CDATA[]]></system-out>
   <system-err><![CDATA[]]></system-err>
 </testsuite>

@@ -59,12 +59,13 @@ object NativeLiveUpdates {
                 data=Uri.parse("xenoportal://native/${session.id}/$target")
                 putExtra("session",session.id);putExtra("target",target);putExtra("source","android-live-update")
             },PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
+        val test=session.label.contains("合成")
         val builder=NotificationCompat.Builder(c,PortalDisplay.CHANNEL)
             .setSmallIcon(R.drawable.ic_portal)
-            .setContentTitle("XenoPortal 系统岛验证")
-            .setContentText("你发起的系统显示验证正在进行，30秒后结束；点击查看测试图片")
+            .setContentTitle(if(test) "XenoPortal 系统岛验证" else "XenoPortal · 分享图片")
+            .setContentText(if(test) "你发起的显示验证正在进行，${seconds}秒后结束；点击查看测试图片" else "图片已准备好，可保存或分享；${seconds}秒后收起")
             .setOngoing(true).setAutoCancel(false).setColorized(false)
-            .setRequestPromotedOngoing(true).setShortCriticalText("验证中")
+            .setRequestPromotedOngoing(true).setShortCriticalText(if(test) "验证中" else "待分享")
             .setContentIntent(pending("more")).setTimeoutAfter(seconds*1000L)
         Sharing.installed(c).take(3).forEach { target ->
             builder.addAction(R.drawable.ic_portal,target.name,pending(target.id))
@@ -82,7 +83,7 @@ object NativeLiveUpdates {
         val app=c.applicationContext
         if (!Preferences.enabled(app)) { Diagnostics.stage(5,"阻断","系统实时通知：总开关关闭");return }
         val session=MediaSessions.current
-        if (session==null || MediaSessions.find(app,session.id)==null) { Diagnostics.stage(5,"阻断","先生成新的测试图");return }
+        if (session==null || MediaSessions.find(app,session.id)==null) { Diagnostics.stage(5,"阻断","先选取图片或生成测试图");return }
         PortalDisplay.close(app)
         val ticket=++generation
         status="正在检查系统实时通知权限"

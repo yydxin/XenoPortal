@@ -1,6 +1,6 @@
 # 自己生成长期 release 签名
 
-交付的 probe APK 只能作为诊断版本。正式维护时请自己生成、离线备份签名密钥；不要把 keystore、密码、keystore.properties 加进仓库、工单或日志。
+当前beta沿用先前独立诊断证书，便于覆盖安装；并未因此取得小米平台签名准入。正式长期维护可自行生成并离线备份密钥；不要把 keystore、密码、keystore.properties 加进仓库、工单或日志。
 
 在源码目录外创建密钥，keytool 会交互询问密码（避免命令行明文参数）：
 
@@ -28,4 +28,4 @@ unset XENO_STORE_PASSWORD XENO_KEY_PASSWORD
 
 release APK 路径 `app/build/outputs/apk/release/app-release.apk`。用 SDK build-tools 的 apksigner verify 验证，不要只根据文件名判断。
 
-本轮诊断 APK 使用工作区外的独立测试证书构建；密钥与密码不在源码压缩包或日志中。该证书未登记小米平台，不产生超级岛授权。自行换签名后无法覆盖原签名安装，卸载会清空应用数据，安装前请先导出需保留的诊断日志。长期自用请尽早切换自己的密钥。
+当前beta和历史诊断APK使用工作区外的同一独立测试证书构建；密钥与密码不在源码压缩包或日志中。该证书未登记小米平台，不产生超级岛授权。自行换签名后无法覆盖原签名安装，卸载会清空应用数据，安装前请先导出需保留的诊断日志。长期自用请尽早切换自己的密钥。

@@ -53,7 +53,7 @@ distributionUrl=https\://services.gradle.org/distributions/gradle-8.13-bin.zip
 /workspace/XenoPortal/app/src/main/java/com/xeno/portal/Diagnostics.kt:125: Warning: Use the KTX extension function SharedPreferences.edit instead? [UseKtx]
     fun threshold(c: Context, value: Int) { prefs(c).edit().putInt("threshold", value.coerceIn(250, 500)).apply() }
                                             ~~~~~~~~~~~~~~~
-/workspace/XenoPortal/app/src/main/java/com/xeno/portal/MainActivity.kt:126: Warning: Use the KTX extension function String.toUri instead? [UseKtx]
+/workspace/XenoPortal/app/src/main/java/com/xeno/portal/MainActivity.kt:155: Warning: Use the KTX extension function String.toUri instead? [UseKtx]
                         OutlinedButton(onClick={activity.openSettings(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,Uri.parse("package:${activity.packageName}")))}, Modifier.fillMaxWidth()) { Text("应用信息 / 自启动 / 后台与省电设置") }
                                                                                                                           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 /workspace/XenoPortal/app/src/main/java/com/xeno/portal/MediaSessions.kt:50: Warning: Use the KTX function createBitmap instead? [UseKtx]

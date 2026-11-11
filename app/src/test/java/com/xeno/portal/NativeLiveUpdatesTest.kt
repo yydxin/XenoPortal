@@ -36,7 +36,7 @@ class NativeLiveUpdatesTest {
         assertNotNull(n.contentIntent)
         assertTrue(n.actions.size in 1..3)
         assertTrue(shadowOf(n.actions.first().actionIntent).isBroadcast)
-        assertEquals("验证中",n.shortCriticalText)
+        assertEquals("待分享",n.shortCriticalText)
         MediaSessions.cleanup(c,all=true)
     }
     @Test fun promotionPermissionIsDeclaredSeparatelyFromRuntimeNotificationPermission() {

@@ -1,6 +1,6 @@
 <resources>
-    <string name="app_name">XenoPortal 诊断版</string>
+    <string name="app_name">XenoPortal Beta</string>
     <string name="overlay_title">自绘岛 · 分享测试\n松手后点击目标</string>
-    <string name="accessibility_description">用于诊断白名单应用的窗口事件、菜单节点和用户主动发起的截图。不会自动点击保存，不启用触摸探索，不拦截触摸。窗口文字树默认关闭。</string>
+    <string name="accessibility_description">用于用户主动发起的评论图片截图，以及可选的白名单窗口诊断。不会自动点击保存，不启用触摸探索，不拦截触摸。窗口文字树默认关闭。</string>
     <style name="AppTheme" parent="android:style/Theme.Material.NoActionBar"><item name="android:fontFamily">sans</item><item name="android:windowLightStatusBar">false</item><item name="android:colorAccent">#76D4CA</item></style>
 </resources>

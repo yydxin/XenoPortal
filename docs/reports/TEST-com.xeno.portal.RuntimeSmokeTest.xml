@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="com.xeno.portal.RuntimeSmokeTest" tests="7" skipped="0" failures="0" errors="0" timestamp="2026-11-11T11:05:51.029Z" hostname="1ec1df0e373f" time="2.44">
+<testsuite name="com.xeno.portal.RuntimeSmokeTest" tests="7" skipped="0" failures="0" errors="0" timestamp="2026-11-11T11:25:14.885Z" hostname="1ec1df0e373f" time="6.273">
   <properties/>
-  <testcase name="emptyScanKeepsLastUsefulTargetSnapshotAndCopyIncludesIt" classname="com.xeno.portal.RuntimeSmokeTest" time="0.049"/>
-  <testcase name="menuCandidateSnapshotSurvivesLaterOrdinaryWindowScans" classname="com.xeno.portal.RuntimeSmokeTest" time="0.023"/>
-  <testcase name="appDoesNotRequestNetworkOverlayOrTouchExploration" classname="com.xeno.portal.RuntimeSmokeTest" time="0.068"/>
-  <testcase name="launcherStartsWithoutAccessibilityOrNotificationPermission" classname="com.xeno.portal.RuntimeSmokeTest" time="2.128"/>
-  <testcase name="officialCompatibilityPayloadIsPostedAndOwnRegistrationIsObserved" classname="com.xeno.portal.RuntimeSmokeTest" time="0.081"/>
-  <testcase name="providerOnlySharesSessionDirectoryAndRejectsOtherPrivateFiles" classname="com.xeno.portal.RuntimeSmokeTest" time="0.057"/>
-  <testcase name="capabilityRefreshDoesNotEraseNotificationSubmission" classname="com.xeno.portal.RuntimeSmokeTest" time="0.034"/>
+  <testcase name="emptyScanKeepsLastUsefulTargetSnapshotAndCopyIncludesIt" classname="com.xeno.portal.RuntimeSmokeTest" time="0.131"/>
+  <testcase name="menuCandidateSnapshotSurvivesLaterOrdinaryWindowScans" classname="com.xeno.portal.RuntimeSmokeTest" time="0.143"/>
+  <testcase name="appDoesNotRequestNetworkOverlayOrTouchExploration" classname="com.xeno.portal.RuntimeSmokeTest" time="0.146"/>
+  <testcase name="launcherStartsWithoutAccessibilityOrNotificationPermission" classname="com.xeno.portal.RuntimeSmokeTest" time="5.466"/>
+  <testcase name="officialCompatibilityPayloadIsPostedAndOwnRegistrationIsObserved" classname="com.xeno.portal.RuntimeSmokeTest" time="0.207"/>
+  <testcase name="providerOnlySharesSessionDirectoryAndRejectsOtherPrivateFiles" classname="com.xeno.portal.RuntimeSmokeTest" time="0.094"/>
+  <testcase name="capabilityRefreshDoesNotEraseNotificationSubmission" classname="com.xeno.portal.RuntimeSmokeTest" time="0.08"/>
   <system-out><![CDATA[]]></system-out>
   <system-err><![CDATA[]]></system-err>
 </testsuite>
