@@ -1,4 +1,4 @@
 dedc57486286c4d4be52538d3f934796e3e900f8a5fdd3cf6b496fbd2d2ff652  INSTALL.zh-CN.txt
-3656f9e642da20b25e6d7f9e557e38cdebe1d3bd2403226cfb541ec3cdc44cfd  XenoPortal-0.0.1-beta.1-APK.zip
+529a3bf51c03c640f25055616b70abcb1d5fe1430dd3166aa10bddeba3e55824  XenoPortal-0.0.1-beta.1-APK.zip
 772ee8c3fd71dd7d105dc74eb43e4b75ac9045dfb3a5fed2b93cbf78378e4603  XenoPortal-0.0.1-beta.1-release.apk
-eeb33784f7ce05c78f72de09e7c3f7cb6f0c7ba43f6a8874cceb901cf935f303  XenoPortal-0.0.1-beta.1-source.zip
+75b7efcab2bb50e2f648f30da9031f9cfeb41c4e937452e3e044b3c27b680b6a  XenoPortal-0.0.1-beta.1-source.zip

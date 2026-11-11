@@ -15,7 +15,7 @@
     {
       "name": "XenoPortal-0.0.1-beta.1-APK.zip",
       "bytes": 7233547,
-      "sha256": "3656f9e642da20b25e6d7f9e557e38cdebe1d3bd2403226cfb541ec3cdc44cfd"
+      "sha256": "529a3bf51c03c640f25055616b70abcb1d5fe1430dd3166aa10bddeba3e55824"
     },
     {
       "name": "XenoPortal-0.0.1-beta.1-release.apk",
@@ -24,8 +24,8 @@
     },
     {
       "name": "XenoPortal-0.0.1-beta.1-source.zip",
-      "bytes": 149403,
-      "sha256": "eeb33784f7ce05c78f72de09e7c3f7cb6f0c7ba43f6a8874cceb901cf935f303"
+      "bytes": 149440,
+      "sha256": "75b7efcab2bb50e2f648f30da9031f9cfeb41c4e937452e3e044b3c27b680b6a"
     }
   ]
 }
