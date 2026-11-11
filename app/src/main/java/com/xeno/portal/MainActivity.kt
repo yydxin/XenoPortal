@@ -42,6 +42,7 @@ class MainActivity : ComponentActivity() {
         Diagnostics.stage(0, if (connected) "成功" else "阻断", if (connected) "当前服务实例连接可用" else "当前进程无连接实例；检查无障碍开关/受限制的设置/后台限制，具体原因待确认")
         MediaSessions.cleanup(this)
         PortalDisplay.query(this)
+        NativeLiveUpdates.refresh(this)
     }
     fun openSettings(intent: Intent) {
         try { startActivity(intent) } catch (e: Exception) { Diagnostics.log("SETTINGS", "${e.javaClass.simpleName}:${e.message}") }
@@ -86,7 +87,7 @@ private fun PortalScreen(activity: MainActivity, revision: Int) {
         Column(Modifier.safeDrawingPadding()) {
             Column(Modifier.padding(horizontal=20.dp, vertical=12.dp)) {
                 Text("XenoPortal", style=MaterialTheme.typography.headlineLarge)
-                Text("诊断版 2.0.1 · 免Root菜单验证", style=MaterialTheme.typography.bodyMedium)
+                Text("诊断版 2.0.2 · 系统实时通知入口", style=MaterialTheme.typography.bodyMedium)
             }
             PrimaryTabRow(selectedTabIndex=tab) {
                 listOf("设置", "验证工具", "诊断").forEachIndexed { index, label -> Tab(selected=tab==index, onClick={tab=index}, text={Text(label)}) }
@@ -103,6 +104,9 @@ private fun PortalScreen(activity: MainActivity, revision: Int) {
                             Text("最近请求：${PortalDisplay.lastSubmission}")
                             Text("系统观察：${PortalDisplay.lastObservation}")
                             Text(PortalDisplay.visualConfirmation)
+                            Text(NativeLiveUpdates.capability.detail,style=MaterialTheme.typography.bodySmall)
+                            Text(NativeLiveUpdates.status)
+                            Text(NativeLiveUpdates.observation)
                         } }
                         Toggle("总开关", "开启事件白名单诊断与主动测试；不会自动保存", enabled) {
                             enabled=it; Preferences.set(activity,"enabled",it)
@@ -114,6 +118,8 @@ private fun PortalScreen(activity: MainActivity, revision: Int) {
                         Text("侧载安装后如系统禁止启用：应用信息 → 右上角菜单 → 允许受限制的设置；是否出现该项取决于系统。应用无法可靠判断具体拦截原因。")
                         Button(onClick={permissions.launch(arrayOf(Manifest.permission.POST_NOTIFICATIONS))}, Modifier.fillMaxWidth()) { Text("通知权限：${if(granted(Manifest.permission.POST_NOTIFICATIONS)) "已授权" else "点击申请"}") }
                         OutlinedButton(onClick={activity.openSettings(Intent(Settings.ACTION_CHANNEL_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE,activity.packageName).putExtra(Settings.EXTRA_CHANNEL_ID,PortalDisplay.CHANNEL))}, Modifier.fillMaxWidth()) { Text("检查通知渠道 / 焦点通知开关") }
+                        OutlinedButton(onClick={activity.openSettings(NativeLiveUpdates.settingsIntent(activity))},Modifier.fillMaxWidth()) { Text("打开系统实时通知权限") }
+                        Text("Android16独立的实时通知权限不同于普通通知开关。系统没有对应入口时会打开普通通知设置，并在日志注明。")
                         val images = granted(Manifest.permission.READ_MEDIA_IMAGES); val video = granted(Manifest.permission.READ_MEDIA_VIDEO)
                         Text("媒体完整读取：图片=$images，视频=$video。仅所选照片授权不等于完整读取。诊断截图与保存本应用图片不需要相册读取权限。")
                         OutlinedButton(onClick={permissions.launch(buildList { add(Manifest.permission.READ_MEDIA_IMAGES); add(Manifest.permission.READ_MEDIA_VIDEO); if(Build.VERSION.SDK_INT>=34) add(Manifest.permission.READ_MEDIA_VISUAL_USER_SELECTED) }.toTypedArray())}, Modifier.fillMaxWidth()) { Text("可选：申请媒体读取供后续原图实验") }
@@ -138,7 +144,12 @@ private fun PortalScreen(activity: MainActivity, revision: Int) {
                         Text("点击后切到目标应用；这是用户主动的全屏截图，不是自动长按取图，也不等于原图。不要截取不希望保留的敏感界面。")
                         MediaSessions.current?.let { session ->
                             PreviewImage(session)
-                            Button(onClick={PortalDisplay.show(activity)}, enabled=enabled,modifier=Modifier.fillMaxWidth()) { Text("按检测结果显示（官方 / 自绘）") }
+                            Button(onClick={PortalActions.nativeAfterDelay(activity)},enabled=enabled && Build.VERSION.SDK_INT>=36,modifier=Modifier.fillMaxWidth()) { Text("5秒后请求系统岛（不用自绘）") }
+                            Text("直接使用Android16持续通知/Live Updates，不携带小米JSON；返回桌面观察30秒。系统是否映射到你截图中的岛需真机确认。")
+                            OutlinedButton(onClick={activity.openSettings(NativeLiveUpdates.settingsIntent(activity))},Modifier.fillMaxWidth()) { Text("检查系统实时通知权限") }
+                            Text(NativeLiveUpdates.status)
+                            Text(NativeLiveUpdates.observation,style=MaterialTheme.typography.bodySmall)
+                            Button(onClick={PortalDisplay.show(activity)}, enabled=enabled,modifier=Modifier.fillMaxWidth()) { Text("原有显示路径（小米焦点协议 / 自绘）") }
                             OutlinedButton(onClick={PortalDisplay.show(activity,officialOnly=true)},enabled=enabled,modifier=Modifier.fillMaxWidth()) { Text("单独发送官方探针（观察是否退化）") }
                             OutlinedButton(onClick={PortalActions.officialAfterDelay(activity)},enabled=enabled,modifier=Modifier.fillMaxWidth()) { Text("5秒后测试官方超级岛（先返回桌面）") }
                             Text("延时官方测试显示30秒，并在发送500ms后检查系统是否登记通知。其他显示测试8秒收起。没有登记平台 App Id，仍可能被系统鉴权拒绝；不会把普通通知当作上岛成功。")
@@ -209,6 +220,15 @@ private fun Toggle(title: String, detail: String, value: Boolean, change: (Boole
 object PortalActions {
     private var pending: Runnable? = null
     fun cancel() { pending?.let(Diagnostics.main::removeCallbacks); pending=null }
+    fun nativeAfterDelay(context: android.content.Context) {
+        cancel()
+        val app=context.applicationContext
+        if(!Preferences.enabled(app) || MediaSessions.current==null) {
+            Diagnostics.stage(5,"阻断","先打开总开关并生成新的测试图片");return
+        }
+        Diagnostics.stage(5,"进行中","5秒后请求Android16系统实时通知；请返回桌面，观察30秒；不会使用自绘岛")
+        pending=Runnable {pending=null;NativeLiveUpdates.show(app)}.also {Diagnostics.main.postDelayed(it,5000)}
+    }
     fun officialAfterDelay(context: android.content.Context) {
         cancel()
         if (!Preferences.enabled(context) || MediaSessions.current == null) {

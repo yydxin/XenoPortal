@@ -97,7 +97,7 @@ object Diagnostics {
         val dir = File(context.cacheDir, "diagnostics").apply { mkdirs() }
         dir.listFiles()?.forEach { it.delete() }
         return File(dir, "xeno-diagnostics.txt").apply {
-            writeText("XenoPortal 2.0.1-probe.2\n${android.os.Build.MANUFACTURER} ${android.os.Build.MODEL}\n${android.os.Build.DISPLAY} API ${android.os.Build.VERSION.SDK_INT}\n\n" +
+            writeText("XenoPortal 2.0.2-probe.3\n${android.os.Build.MANUFACTURER} ${android.os.Build.MODEL}\n${android.os.Build.DISPLAY} API ${android.os.Build.VERSION.SDK_INT}\n\n" +
                 textReport())
         }
     }

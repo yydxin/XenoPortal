@@ -1,3 +1,17 @@
+# XenoPortal 2.0.2-probe.3 · Android16 系统实时通知入口
+
+新增Android官方Live Updates入口。旧版仅附加小米焦点JSON，没有申请系统通知提升或设置ongoing；本版补齐该路径，并与小米JSON路径分开测试。不能仅从ChatGPT的截图断定其实现相同，也没有证据保证HyperOS会将所有第三方Live Update显示成超级岛。
+
+操作：打开总开关 → 生成测试图 → 检查“系统实时通知权限” → 点击“5秒后请求系统岛（不用自绘）” → 按Home回桌面观察30秒 → 返回复制日志。此测试不依赖无障碍连接，不使用自绘窗口。
+
+新日志会记录：canPostPromotedNotifications、hasPromotableCharacteristics/eligible、系统活跃通知及返回的FLAG_PROMOTED_ONGOING。只请求提升，不自行设置“已提升”标志；系统已提升仍需确认HyperOS视觉形态。若系统不允许会明确阻断并提供设置入口。Android15及更低版本保留原小米焦点路径。
+
+引用：[Android Live Updates](https://developer.android.com/develop/ui/views/notifications/live-update)、[系统提升设置](https://developer.android.com/reference/android/provider/Settings#ACTION_APP_NOTIFICATION_PROMOTION_SETTINGS)、[36.1提升权限](https://developer.android.com/reference/android/Manifest.permission#POST_PROMOTED_NOTIFICATIONS)。厂商可增加条件；Live Updates面向进行中的用户任务，不能视作任意快捷应用面板的无条件准入。
+
+同签名、版本号202，可覆盖安装。免Root菜单采样继续保留，未接入Root/Shizuku/触摸探索。**自动长按裁图仍未完成；系统提升测试与抖音长按触发是两件独立事情。**
+
+---
+
 # XenoPortal 2.0.1-probe.2 · 免 Root 菜单与官方显示验证
 
 这是针对首轮真机日志的修订：服务连接、手动截图和 notify 提交已有设备日志证据，但官方超级岛实际显示未知，自动长按取图仍未通过。按用户选择继续免 Root 菜单路线，不引入 Shizuku、触摸探索或自动点击保存。

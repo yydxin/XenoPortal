@@ -201,6 +201,7 @@ object PortalDisplay {
         } catch (e: Exception) { Diagnostics.exception(5, "无障碍覆盖窗口", e) }
     }
     fun close(c: Context) {
+        NativeLiveUpdates.cancel(c)
         generation++ // Invalidates any in-flight asynchronous show request.
         expiration?.let(Diagnostics.main::removeCallbacks); expiration = null
         PortalAccessibilityService.active?.hideOverlayWindow()
