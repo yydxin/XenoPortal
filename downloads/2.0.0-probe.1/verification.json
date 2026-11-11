@@ -1,0 +1,32 @@
+{
+  "verified_readable": true,
+  "source_matches_existing_project": true,
+  "original_code_changed": false,
+  "files": [
+    {
+      "name": "XenoPortal-2.0.0-probe.1-redelivery.apk",
+      "bytes": 20966403,
+      "sha256": "c8085ac6a39fda01f7add005fc9fd2c9013b926604448afa71aa26d7ca50104d"
+    },
+    {
+      "name": "XenoPortal-2.0.0-probe.1-APK-bundle.zip",
+      "bytes": 7195443,
+      "sha256": "b4b7dde9a51940716b834e98c292bc9ec00e326f9461837db07bf0d353e82269"
+    },
+    {
+      "name": "XenoPortal-2.0.0-probe.1-complete-source.zip",
+      "bytes": 107363,
+      "sha256": "ea3a6ca6679556a2a5d2cdabdc0607e6031b31a7585bb9707d81b3c83e6efe3f"
+    },
+    {
+      "name": "INSTALL.zh-CN.txt",
+      "bytes": 2366,
+      "sha256": "aa84cf5dce322dc1785fce890aa8329721d37a212442d52a37b475f4d393e6f8"
+    },
+    {
+      "name": "INSTALL.zh-CN.md",
+      "bytes": 5096,
+      "sha256": "db8b452e57e94f4d4f47e73d347e24e959479551b6fbc3f42a8747f337d255cd"
+    }
+  ]
+}
