@@ -17,7 +17,10 @@ import java.util.UUID
     val mime = "image/jpeg"
 }
 
+enum class AlbumSaveResult { SAVED, BUSY, FAILED }
+
 object MediaSessions {
+    private val savingIds = java.util.concurrent.ConcurrentHashMap.newKeySet<String>()
     const val LEASE_MS = 10 * 60 * 1000L
     var current by mutableStateOf<MediaSession?>(null)
         private set
@@ -64,7 +67,7 @@ object MediaSessions {
     }
     fun discardIfUnshared(c: Context, id: String) {
         if (!ProbePolicy.validSessionId(id)) return
-        if (!File(directory(c), "$id.lease").exists()) {
+        if (id !in savingIds && !File(directory(c), "$id.lease").exists()) {
             File(directory(c), "$id.jpg").delete()
             if (current?.id == id) current = null
         }
@@ -72,34 +75,39 @@ object MediaSessions {
     private var cleanupTask: Runnable? = null
     fun cleanup(context: Context, all: Boolean = false) {
         val c = context.applicationContext
-        directory(c).listFiles()?.forEach { if (all || System.currentTimeMillis() - it.lastModified() >= LEASE_MS) it.delete() }
+        directory(c).listFiles()?.forEach { if (it.name.substringBefore('.') !in savingIds && (all || System.currentTimeMillis() - it.lastModified() >= LEASE_MS)) it.delete() }
         if (current?.file?.exists() == false) Diagnostics.main.post { current = null }
         cleanupTask?.let(Diagnostics.main::removeCallbacks)
         cleanupTask = Runnable {
-            directory(c).listFiles()?.forEach { if (System.currentTimeMillis() - it.lastModified() >= LEASE_MS) it.delete() }
+            directory(c).listFiles()?.forEach { if (it.name.substringBefore('.') !in savingIds && System.currentTimeMillis() - it.lastModified() >= LEASE_MS) it.delete() }
             if (current?.file?.exists() == false) current = null
         }.also { Diagnostics.main.postDelayed(it, LEASE_MS) }
     }
-    fun saveToAlbum(c: Context, session: MediaSession, done: (Boolean) -> Unit) {
+    fun saveToAlbum(c: Context, session: MediaSession, done: (AlbumSaveResult) -> Unit) {
+        if (!savingIds.add(session.id)) {
+            Diagnostics.log("ALBUM", "session=${session.id} 正在保存，重复请求跳过")
+            Diagnostics.main.post { done(AlbumSaveResult.BUSY) }; return
+        }
+        val app = c.applicationContext
         Diagnostics.io.execute {
             var uri: android.net.Uri? = null
             try {
-                check(find(c, session.id) != null) { "会话过期" }
+                check(find(app, session.id) != null) { "会话过期" }
                 val values = ContentValues().apply {
                     put(MediaStore.Images.Media.DISPLAY_NAME, "XenoPortal_${System.currentTimeMillis()}.jpg")
                     put(MediaStore.Images.Media.MIME_TYPE, session.mime)
                     put(MediaStore.Images.Media.RELATIVE_PATH, "Pictures/XenoPortal")
                     put(MediaStore.Images.Media.IS_PENDING, 1)
                 }
-                uri = c.contentResolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values) ?: error("insert 返回 null")
-                c.contentResolver.openOutputStream(uri)?.use { out -> session.file.inputStream().use { it.copyTo(out) } } ?: error("无法写入相册")
-                val updated = c.contentResolver.update(uri, ContentValues().apply { put(MediaStore.Images.Media.IS_PENDING, 0) }, null, null)
+                uri = app.contentResolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values) ?: error("insert 返回 null")
+                app.contentResolver.openOutputStream(uri)?.use { out -> session.file.inputStream().use { it.copyTo(out) } } ?: error("无法写入相册")
+                val updated = app.contentResolver.update(uri, ContentValues().apply { put(MediaStore.Images.Media.IS_PENDING, 0) }, null, null)
                 check(updated == 1) { "无法结束相册 pending 状态" }
                 Diagnostics.stage(7, "成功", "本应用图片写入 Pictures/XenoPortal；相册可见性仍请人工检查")
-                Diagnostics.main.post { done(true) }
+                Diagnostics.main.post { savingIds.remove(session.id); done(AlbumSaveResult.SAVED) }
             } catch (e: Exception) {
-                uri?.let { runCatching { c.contentResolver.delete(it, null, null) } }
-                Diagnostics.exception(7, "保存相册", e); Diagnostics.main.post { done(false) }
+                uri?.let { runCatching { app.contentResolver.delete(it, null, null) } }
+                Diagnostics.exception(7, "保存相册", e); Diagnostics.main.post { savingIds.remove(session.id); done(AlbumSaveResult.FAILED) }
             }
         }
     }

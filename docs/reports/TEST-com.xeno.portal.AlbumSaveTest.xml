@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.xeno.portal.AlbumSaveTest" tests="2" skipped="0" failures="0" errors="0" timestamp="2026-11-11T10:50:01.309Z" hostname="1ec1df0e373f" time="8.901">
+  <properties/>
+  <testcase name="albumActionIsPrivateBroadcastAndSavesOnceWithoutLaunchingActivity" classname="com.xeno.portal.AlbumSaveTest" time="8.612"/>
+  <testcase name="failedWriteDeletesOnlyInsertedPendingRowAndKeepsSourceForRetry" classname="com.xeno.portal.AlbumSaveTest" time="0.288"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[Intent = Intent { act=com.xeno.portal.SAVE_ALBUM dat=xenoportal://album/... cmp=com.xeno.portal/.AlbumSaveReceiver (has extras) }; Matching wrappers: [Wrapper[receiver=[com.xeno.portal.AlbumSaveReceiver@5e276c6c], context=[android.app.ContextImpl@5aa91eef], intentFilter=[android.content.IntentFilter@2e5c1012]]]
+Intent = Intent { act=com.xeno.portal.SAVE_ALBUM dat=xenoportal://album/... cmp=com.xeno.portal/.AlbumSaveReceiver (has extras) }; Matching wrappers: [Wrapper[receiver=[com.xeno.portal.AlbumSaveReceiver@5e276c6c], context=[android.app.ContextImpl@5aa91eef], intentFilter=[android.content.IntentFilter@2e5c1012]]]
+Intent = Intent { act=com.xeno.portal.SAVE_ALBUM dat=xenoportal://album/... cmp=com.xeno.portal/.AlbumSaveReceiver (has extras) }; Matching wrappers: [Wrapper[receiver=[com.xeno.portal.AlbumSaveReceiver@5e276c6c], context=[android.app.ContextImpl@5aa91eef], intentFilter=[android.content.IntentFilter@2e5c1012]]]
+]]></system-err>
+</testsuite>

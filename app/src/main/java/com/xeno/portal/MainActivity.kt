@@ -87,7 +87,7 @@ private fun PortalScreen(activity: MainActivity, revision: Int) {
         Column(Modifier.safeDrawingPadding()) {
             Column(Modifier.padding(horizontal=20.dp, vertical=12.dp)) {
                 Text("XenoPortal", style=MaterialTheme.typography.headlineLarge)
-                Text("诊断版 2.0.2 · 系统实时通知入口", style=MaterialTheme.typography.bodyMedium)
+                Text("诊断版 2.0.3 · 直接保存与抖音分组采样", style=MaterialTheme.typography.bodyMedium)
             }
             PrimaryTabRow(selectedTabIndex=tab) {
                 listOf("设置", "验证工具", "诊断").forEachIndexed { index, label -> Tab(selected=tab==index, onClick={tab=index}, text={Text(label)}) }
@@ -110,7 +110,7 @@ private fun PortalScreen(activity: MainActivity, revision: Int) {
                         } }
                         Toggle("总开关", "开启事件白名单诊断与主动测试；不会自动保存", enabled) {
                             enabled=it; Preferences.set(activity,"enabled",it)
-                            if (!it) { PortalActions.cancel(); PortalDisplay.close(activity); Preferences.set(activity,"tree",false); trees=false; Diagnostics.updateTree("总开关关闭，已清除文字树预览") }
+                            if (!it) { DouyinMenuTrials.finish("总开关关闭"); PortalActions.cancel(); PortalDisplay.close(activity); Preferences.set(activity,"tree",false); trees=false; Diagnostics.updateTree("总开关关闭，已清除文字树预览") }
                         }
                         Toggle("强制使用自绘岛", "官方权限查询失败时也会自动降级；不需要悬浮窗权限", overlay) { overlay=it; Preferences.set(activity,"overlay",it) }
                         Text("权限向导", style=MaterialTheme.typography.titleLarge)
@@ -121,7 +121,7 @@ private fun PortalScreen(activity: MainActivity, revision: Int) {
                         OutlinedButton(onClick={activity.openSettings(NativeLiveUpdates.settingsIntent(activity))},Modifier.fillMaxWidth()) { Text("打开系统实时通知权限") }
                         Text("Android16独立的实时通知权限不同于普通通知开关。系统没有对应入口时会打开普通通知设置，并在日志注明。")
                         val images = granted(Manifest.permission.READ_MEDIA_IMAGES); val video = granted(Manifest.permission.READ_MEDIA_VIDEO)
-                        Text("媒体完整读取：图片=$images，视频=$video。仅所选照片授权不等于完整读取。诊断截图与保存本应用图片不需要相册读取权限。")
+                        Text("媒体完整读取：图片=$images，视频=$video。仅所选照片授权不等于完整读取。诊断截图与保存本应用图片不需要相册读取权限。岛上“保存到相册”直接写入 Pictures/XenoPortal，不打开应用页面。")
                         OutlinedButton(onClick={permissions.launch(buildList { add(Manifest.permission.READ_MEDIA_IMAGES); add(Manifest.permission.READ_MEDIA_VIDEO); if(Build.VERSION.SDK_INT>=34) add(Manifest.permission.READ_MEDIA_VISUAL_USER_SELECTED) }.toTypedArray())}, Modifier.fillMaxWidth()) { Text("可选：申请媒体读取供后续原图实验") }
                         OutlinedButton(onClick={activity.openSettings(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,Uri.parse("package:${activity.packageName}")))}, Modifier.fillMaxWidth()) { Text("应用信息 / 自启动 / 后台与省电设置") }
                         Text("HyperOS 中按需要手动检查自启动、后台弹出界面与电池无限制；入口随系统版本变化。服务被终止时，设置页与 S0 会提示未连接。")
@@ -155,6 +155,19 @@ private fun PortalScreen(activity: MainActivity, revision: Int) {
                             Text("延时官方测试显示30秒，并在发送500ms后检查系统是否登记通知。其他显示测试8秒收起。没有登记平台 App Id，仍可能被系统鉴权拒绝；不会把普通通知当作上岛成功。")
                             Button(onClick={PortalDisplay.open(activity,session,"more")}, Modifier.fillMaxWidth()) { Text("打开全部分享目标（验证 S6 / S7）") }
                         }
+                        HorizontalDivider()
+                        Text("抖音长按接入 · 分组采样",style=MaterialTheme.typography.titleLarge)
+                        Text("先在诊断页开启窗口文字树。每组60秒，切到抖音打开对应菜单并停留约2秒；回到本页点结束。三组一起复制，避免日志被下一组覆盖。此步骤只记录菜单与图片节点，不自动保存或截图。")
+                        DouyinMenuTrials.Case.entries.forEach { case ->
+                            OutlinedButton(onClick={DouyinMenuTrials.start(activity,case)},enabled=enabled,modifier=Modifier.fillMaxWidth()) { Text("采集：${case.title}") }
+                        }
+                        Text(DouyinMenuTrials.status)
+                        DouyinMenuTrials.Case.entries.forEach { case ->
+                            val r=DouyinMenuTrials.results[case]
+                            Text("${case.title}：${if(r==null) "未采集" else "${r.samples}次，同窗口候选=${r.candidate}"}",style=MaterialTheme.typography.bodySmall)
+                        }
+                        OutlinedButton(onClick={DouyinMenuTrials.finish()},enabled=DouyinMenuTrials.active!=null,modifier=Modifier.fillMaxWidth()) { Text("结束本组并保留证据") }
+                        Text(DouyinMenuTrials.comparison(),style=MaterialTheme.typography.bodySmall)
                         Text("请按实际看到的形态确认本次官方测试：")
                         OutlinedButton(onClick={PortalDisplay.confirmVisual("人工确认：看到了官方超级岛")},Modifier.fillMaxWidth()) { Text("看到了官方超级岛") }
                         OutlinedButton(onClick={PortalDisplay.confirmVisual("人工确认：仅看到普通通知，没有官方超级岛")},Modifier.fillMaxWidth()) { Text("仅看到普通通知") }
@@ -176,12 +189,14 @@ private fun PortalScreen(activity: MainActivity, revision: Int) {
                             } }
                         }
                         Toggle("调试：记录窗口文字树", "可能包含聊天内容；仅采样白名单窗口，普通事件1.5秒限频、关键窗口变化最快250ms，最多1000节点。关闭后不再采集，历史日志需手动清除。",trees) {
-                            if(it) treeWarning=true else {trees=false;Preferences.set(activity,"tree",false);Diagnostics.updateTree("文字树采样已关闭")}
+                            if(it) treeWarning=true else {DouyinMenuTrials.finish("窗口调试关闭");trees=false;Preferences.set(activity,"tree",false);Diagnostics.updateTree("文字树采样已关闭")}
                         }
                         OutlinedButton(onClick={PortalAccessibilityService.active?.sampleWindows() ?: Diagnostics.stage(0,"阻断","无障碍未连接")},Modifier.fillMaxWidth()) { Text("立即采样所有窗口（需开启调试）") }
-                        Text("菜单只记录候选，不会点击“保存到相册”。请在开启调试后进入抖音，分别采集长按图片/表情包与普通分享面板；切回本页会保留最近成功的白名单窗口快照。")
+                        Text("菜单只记录候选，不会点击“保存到相册”。请在开启调试后进入抖音，分别采集长按图片/表情包与普通分享面板；切回本页会保留最近成功的白名单窗口快照。验证工具中的三组采样会分别保留，复制日志含三组完整结果。")
                         Row(horizontalArrangement=Arrangement.spacedBy(8.dp)) {
-                            Button(onClick={val text=Diagnostics.textReport();(activity.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as ClipboardManager).setPrimaryClip(ClipData.newPlainText("XenoPortal",text))}) { Text("复制日志") }
+                            Button(onClick={try {
+                                val text=Diagnostics.clipboardReport();(activity.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as ClipboardManager).setPrimaryClip(ClipData.newPlainText("XenoPortal",text))
+                            } catch(e:Exception) { Diagnostics.exception(3,"复制报告失败，请分享导出",e) }}) { Text("复制日志") }
                             OutlinedButton(onClick={exportWarning=true}) { Text("分享导出") }
                             OutlinedButton(onClick={Diagnostics.clear()}) { Text("清除") }
                         }

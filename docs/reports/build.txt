@@ -113,10 +113,10 @@ w: file:///workspace/XenoPortal/app/src/test/java/com/xeno/portal/NativeLiveUpda
 > Task :app:testDebugUnitTest
 > Task :app:preDebugAndroidTestBuild SKIPPED
 > Task :app:generateDebugAndroidTestResValues UP-TO-DATE
-> Task :app:generateDebugAndroidTestLintModel
 > Task :app:lintVitalReportRelease
-> Task :app:generateDebugLintReportModel
+> Task :app:generateDebugAndroidTestLintModel
 > Task :app:lintVitalRelease
+> Task :app:generateDebugLintReportModel
 > Task :app:generateDebugUnitTestLintModel
 > Task :app:packageRelease
 > Task :app:createReleaseApkListingFileRedirect
@@ -130,5 +130,5 @@ Wrote HTML report to file:///workspace/XenoPortal/app/build/reports/lint-results
 
 > Task :app:lintDebug
 
-BUILD SUCCESSFUL in 1m 21s
+BUILD SUCCESSFUL in 1m 30s
 105 actionable tasks: 26 executed, 79 up-to-date

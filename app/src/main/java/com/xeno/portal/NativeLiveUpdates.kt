@@ -54,7 +54,7 @@ object NativeLiveUpdates {
         return Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE,c.packageName)
     }
     internal fun buildNotification(c: Context, session: MediaSession, seconds: Int): Notification {
-        fun pending(target: String): PendingIntent = PendingIntent.getActivity(c,0,
+        fun pending(target: String): PendingIntent = if (target == "album") AlbumSaveReceiver.pending(c,session,"android-live-update") else PendingIntent.getActivity(c,0,
             Intent(c,ShareActivity::class.java).apply {
                 data=Uri.parse("xenoportal://native/${session.id}/$target")
                 putExtra("session",session.id);putExtra("target",target);putExtra("source","android-live-update")

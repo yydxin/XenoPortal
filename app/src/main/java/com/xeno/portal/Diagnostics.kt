@@ -86,8 +86,17 @@ object Diagnostics {
         "\n\n" + lines.joinToString("\n") +
         "\n\n最近窗口采样尝试\n" + treeAttempt +
         "\n\n最近成功读取的白名单窗口快照（以快照时间为准）\n" + tree +
-        "\n\n最近菜单候选快照（不能证明长按来源）\n" + menuTree
+        "\n\n最近菜单候选快照（不能证明长按来源）\n" + menuTree + "\n\n" + DouyinMenuTrials.report()
+    fun clipboardReport(): String {
+        val full=textReport()
+        if(full.length<=200000) return full
+        return "报告超过剪贴板保守大小，以下为摘要；完整窗口树请使用分享导出。\n\n" +
+            DouyinMenuTrials.report(16000) + "\n\n" +
+            stages.entries.joinToString("\n") { "S${it.key} ${it.value}" } +
+            "\n\n最近日志\n" + lines.joinToString("\n").takeLast(40000)
+    }
     fun clear() {
+        DouyinMenuTrials.clear()
         main.post {
             lines = emptyList(); tree = "已清除窗口树"; treeAttempt = "已清除采样结果"; menuTree = "已清除菜单候选快照"; stages = (0..7).associateWith { Stage() }
             io.execute { runCatching { journal.writeText("") } }
@@ -97,7 +106,7 @@ object Diagnostics {
         val dir = File(context.cacheDir, "diagnostics").apply { mkdirs() }
         dir.listFiles()?.forEach { it.delete() }
         return File(dir, "xeno-diagnostics.txt").apply {
-            writeText("XenoPortal 2.0.2-probe.3\n${android.os.Build.MANUFACTURER} ${android.os.Build.MODEL}\n${android.os.Build.DISPLAY} API ${android.os.Build.VERSION.SDK_INT}\n\n" +
+            writeText("XenoPortal 2.0.3-probe.4\n${android.os.Build.MANUFACTURER} ${android.os.Build.MODEL}\n${android.os.Build.DISPLAY} API ${android.os.Build.VERSION.SDK_INT}\n\n" +
                 textReport())
         }
     }

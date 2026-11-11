@@ -2,7 +2,7 @@ plugins { id("com.android.application"); id("org.jetbrains.kotlin.android"); id(
 android {
     namespace = "com.xeno.portal"
     compileSdk = 36
-    defaultConfig { applicationId = "com.xeno.portal"; minSdk = 33; targetSdk = 36; versionCode = 202; versionName = "2.0.2-probe.3" }
+    defaultConfig { applicationId = "com.xeno.portal"; minSdk = 33; targetSdk = 36; versionCode = 203; versionName = "2.0.3-probe.4" }
     buildFeatures { compose = true }
     testOptions {
         unitTests.isIncludeAndroidResources = true

@@ -1,3 +1,16 @@
+# XenoPortal 2.0.3-probe.4 · 岛上直接保存 / 抖音分组采样
+
+用户已在本机确认probe.3的系统岛可以显示（离开XenoPortal后可见）；这条路径继续保留。此反馈不代表全部HyperOS设备或长按链路通过。
+
+- 岛上“保存到相册”改为后台广播回调，直接写入`Pictures/XenoPortal`，无Activity跳转。保存期间保护缓存，重复点击不重复写，失败保留源图并记录S7。
+- 新增三组独立采样入口：评论图片、评论表情包、普通分享面板。总开关/无障碍/文字树调试开启后，每组60秒内切到抖音打开对应菜单并停留约2秒；返回结束该组，最后分享导出完整报告。
+- 菜单锚点只在同一窗口内匹配，保留前置快照与节点bounds/longClick/visible。普通分享同样命中时明确阻断自动化。
+- **自动长按目标定位与未压暗裁图仍未完成。** 当前不自动点抖音“保存”，不接入Root/Shizuku/触摸探索，不随意截头像或全屏冒充目标图片。
+
+同签名versionCode203，可覆盖安装。详细说明见[PROBE4.md](docs/PROBE4.md)，编译验证与真机边界见[VALIDATION.md](docs/VALIDATION.md)。
+
+---
+
 # XenoPortal 2.0.2-probe.3 · Android16 系统实时通知入口
 
 新增Android官方Live Updates入口。旧版仅附加小米焦点JSON，没有申请系统通知提升或设置ongoing；本版补齐该路径，并与小米JSON路径分开测试。不能仅从ChatGPT的截图断定其实现相同，也没有证据保证HyperOS会将所有第三方Live Update显示成超级岛。

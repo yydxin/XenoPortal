@@ -34,9 +34,9 @@ class ShareActivity : ComponentActivity() {
                             targets.forEach { target ->
                                 Button(enabled = !busy, onClick = {
                                     busy = true
-                                    if (target.id == "album") MediaSessions.saveToAlbum(this@ShareActivity, session) { ok ->
+                                    if (target.id == "album") MediaSessions.saveToAlbum(this@ShareActivity, session) { result ->
                                         busy = false
-                                        if (ok) { PortalDisplay.close(this@ShareActivity); MediaSessions.discardIfUnshared(this@ShareActivity, id); finish() }
+                                        if (result == AlbumSaveResult.SAVED) { PortalDisplay.close(this@ShareActivity); MediaSessions.discardIfUnshared(this@ShareActivity, id); finish() }
                                     } else {
                                         val ok = Sharing.send(this@ShareActivity, session, target)
                                         busy = false

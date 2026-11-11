@@ -32,6 +32,7 @@ class PortalAccessibilityService : AccessibilityService() {
     }
     private var lastEventLog = 0L
     private var lastTree = 0L
+    private var pendingTree: Runnable? = null
     private var lastCandidate = 0L
     override fun onServiceConnected() {
         connection = java.lang.ref.WeakReference(this)
@@ -44,8 +45,10 @@ class PortalAccessibilityService : AccessibilityService() {
     }
     override fun onDestroy() { detach(); super.onDestroy() }
     private fun detach() {
+        pendingTree?.let(Diagnostics.main::removeCallbacks);pendingTree=null
         hideOverlayWindow()
         if (active === this) {
+            DouyinMenuTrials.finish("无障碍服务断开")
             PortalActions.cancel()
             PortalDisplay.close(this)
             connection.clear()
@@ -77,7 +80,23 @@ class PortalAccessibilityService : AccessibilityService() {
         val critical = event.eventType == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED ||
             event.eventType == AccessibilityEvent.TYPE_WINDOWS_CHANGED ||
             event.eventType == AccessibilityEvent.TYPE_VIEW_LONG_CLICKED
-        if (now - lastTree < if (critical) 250 else 1500) return
+        val interval=if(critical) 250L else 1500L
+        if (now-lastTree<interval) {
+            if(pendingTree==null || critical) {
+                pendingTree?.let(Diagnostics.main::removeCallbacks)
+                val windowId=event.windowId
+                pendingTree=Runnable {
+                    pendingTree=null
+                    if(Preferences.enabled(this) && Preferences.treeEnabled(this) &&
+                        ProbePolicy.shouldInspectEvent("",foregroundPackage,Preferences.whitelist(this))) {
+                        lastTree=SystemClock.elapsedRealtime()
+                        sampleWindows(pkg,windowId,null,"trailing=$type")
+                    }
+                }.also {Diagnostics.main.postDelayed(it,(interval-(now-lastTree)).coerceAtLeast(1))}
+            }
+            return
+        }
+        pendingTree?.let(Diagnostics.main::removeCallbacks);pendingTree=null
         lastTree = now
         val source = try { event.source } catch (e: Exception) {
             Diagnostics.log("TREE", "event.source读取失败:${e.javaClass.simpleName}"); null
@@ -95,7 +114,7 @@ class PortalAccessibilityService : AccessibilityService() {
         try {
             val timestamp = android.text.format.DateFormat.format("HH:mm:ss.SSS", System.currentTimeMillis())
             val output = StringBuilder("captured=$timestamp $reason eventPackage=$eventPackage eventWindow=$eventWindowId\n")
-            val labels = mutableSetOf<String>()
+            val menuWindows = mutableListOf<MenuWindow>()
             val treeLines = mutableListOf<String>()
             val visitedWindows = mutableSetOf<Int>()
             var count = 0
@@ -114,6 +133,8 @@ class PortalAccessibilityService : AccessibilityService() {
                     if (windowId >= 0 && windowId in visitedWindows) return
                     if (windowId >= 0) visitedWindows.add(windowId)
                     eligibleRoots++
+                    val labels = mutableSetOf<String>()
+                    val mediaNodes = mutableListOf<String>()
                     val queue = ArrayDeque<Pair<AccessibilityNodeInfo, Int>>()
                     queue.add(root to 0)
                     output.appendLine("route=$route window=$windowId package=$pkg")
@@ -129,8 +150,9 @@ class PortalAccessibilityService : AccessibilityService() {
                             val imageLike = listOf("Image", "Picture", "Video", "SurfaceView", "TextureView").any { cls.contains(it, true) }
                             if (text.isNotBlank() || desc.isNotBlank() || imageLike) {
                                 val bounds = Rect(); node.getBoundsInScreen(bounds)
-                                val line = "w=$windowId text=$text desc=$desc id=${node.viewIdResourceName} class=$cls click=${node.isClickable} bounds=$bounds mediaCandidate=$imageLike"
+                                val line = "w=$windowId text=$text desc=$desc id=${node.viewIdResourceName} class=$cls click=${node.isClickable} longClick=${node.isLongClickable} visible=${node.isVisibleToUser} bounds=$bounds mediaCandidate=$imageLike"
                                 output.appendLine(line); treeLines.add(line)
+                                if(imageLike) mediaNodes.add(line)
                             }
                             if (depth < 30) for (i in 0 until node.childCount.coerceAtMost(100)) {
                                 if (queue.size < 1000) node.getChild(i)?.let { queue.add(it to depth + 1) }
@@ -138,6 +160,7 @@ class PortalAccessibilityService : AccessibilityService() {
                             } else if (node.childCount > 0) truncated = true
                         } catch (e: Exception) { errors++; output.appendLine("NODE_UNAVAILABLE ${e.javaClass.simpleName}") }
                     }
+                    menuWindows.add(MenuWindow(pkg,windowId,labels.toSet(),mediaNodes.toList()))
                     if (truncated || queue.isNotEmpty()) output.appendLine("TRUNCATED 节点/深度/队列达到上限")
                 } catch (e: Exception) { errors++; output.appendLine("ROOT_UNAVAILABLE window=$windowId ${e.javaClass.simpleName}") }
             }
@@ -156,12 +179,14 @@ class PortalAccessibilityService : AccessibilityService() {
             val summary = "captured=$timestamp windows=${all.size} eligibleRoots=$eligibleRoots emptyRoots=$emptyRoots skippedRoots=$skippedRoots errors=$errors visited=$count reason=$reason"
             output.appendLine(summary)
             if (count == 0) output.appendLine("此次无白名单节点；不证明抖音菜单不可见。保留此前成功快照。")
-            Diagnostics.windowScan(summary, output.toString().take(100000), count, ProbePolicy.menuCandidate(labels))
+            val candidate = menuWindows.any { it.candidate }
+            Diagnostics.windowScan(summary, output.toString().take(100000), count, candidate)
+            DouyinMenuTrials.observe(menuWindows,output.toString().take(100000))
             Diagnostics.batch("TREE", listOf(summary) + treeLines.take(100) +
                 if (count == 0) listOf(output.toString().take(2200)) else listOf("完整受限快照已保留；菜单候选不等于可靠长按或目标坐标"))
-            if (ProbePolicy.menuCandidate(labels) && SystemClock.elapsedRealtime() - lastCandidate > 2000) {
+            if (candidate && SystemClock.elapsedRealtime() - lastCandidate > 2000) {
                 lastCandidate = SystemClock.elapsedRealtime()
-                Diagnostics.stage(3, "待验证", "命中菜单候选：分享评论给 + 保存到相册；原触点未知，尚未自动截图/点击保存，需与普通分享面板对照")
+                Diagnostics.stage(3, "待验证", "命中同窗口菜单候选：分享评论给 + 保存到相册；原触点未知，尚未自动截图/点击保存，需与普通分享面板对照")
             }
         } catch (e: Exception) { Diagnostics.exception(3, "遍历全窗口", e) }
     }

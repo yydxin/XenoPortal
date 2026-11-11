@@ -101,6 +101,7 @@ object PortalDisplay {
         }
     }
     private fun pending(c: Context, session: MediaSession, target: String): PendingIntent {
+        if (target == "album") return AlbumSaveReceiver.pending(c,session,"official-notification")
         val intent = Intent(c, ShareActivity::class.java).apply {
             data = Uri.parse("xenoportal://session/${session.id}/$target")
             putExtra("session", session.id); putExtra("target", target); putExtra("source", "official-notification")
@@ -109,6 +110,10 @@ object PortalDisplay {
     }
     fun open(c: Context, session: MediaSession, target: String, source: String = "manual-tools") {
         try {
+            if (target == "album") {
+                AlbumSaveReceiver.pending(c,session,source).send()
+                return
+            }
             c.startActivity(Intent(c, ShareActivity::class.java).apply {
                 putExtra("session", session.id); putExtra("target", target); putExtra("source", source); addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             })
