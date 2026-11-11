@@ -207,6 +207,7 @@ object PortalDisplay {
     }
     fun close(c: Context) {
         NativeLiveUpdates.cancel(c)
+        PortalAccessibilityService.active?.commentPicker?.cancel()
         generation++ // Invalidates any in-flight asynchronous show request.
         expiration?.let(Diagnostics.main::removeCallbacks); expiration = null
         PortalAccessibilityService.active?.hideOverlayWindow()

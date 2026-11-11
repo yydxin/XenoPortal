@@ -38,6 +38,22 @@ class DouyinMenuTrialsTest {
         assertTrue(report.contains("image-panel"));assertTrue(report.contains("ordinary-share-panel"))
         DouyinMenuTrials.clear();service.destroy();shadowOf(Looper.getMainLooper()).idle()
     }
+    @Test fun stickerMenuIsRetainedButCommentListIsNotAcceptedAsOrdinaryShareEvidence() {
+        val service=start();val c=RuntimeEnvironment.getApplication()
+        DouyinMenuTrials.start(c,DouyinMenuTrials.Case.IMAGE)
+        DouyinMenuTrials.observe(listOf(MenuWindow(pkg,1,setOf("分享评论给","保存到相册"),emptyList())),"image")
+        DouyinMenuTrials.start(c,DouyinMenuTrials.Case.STICKER)
+        DouyinMenuTrials.observe(listOf(MenuWindow(pkg,2,setOf("添加到表情"),emptyList())),"sticker-panel")
+        assertNull(DouyinMenuTrials.active)
+        assertTrue(DouyinMenuTrials.results.getValue(DouyinMenuTrials.Case.STICKER).panel.contains("表情菜单"))
+        DouyinMenuTrials.start(c,DouyinMenuTrials.Case.SHARE)
+        DouyinMenuTrials.observe(listOf(MenuWindow(pkg,3,setOf("评论 147","图片","回复"),emptyList())),"comment-list")
+        DouyinMenuTrials.finish()
+        shadowOf(Looper.getMainLooper()).idle()
+        assertTrue(DouyinMenuTrials.comparison().contains("未取得分享面板"))
+        assertEquals("证据不足",Diagnostics.stages.getValue(3).state)
+        DouyinMenuTrials.clear();service.destroy();shadowOf(Looper.getMainLooper()).idle()
+    }
     @Test fun samplingExpiresWithoutInventingMenuEvidence() {
         val service=start();val c=RuntimeEnvironment.getApplication()
         DouyinMenuTrials.start(c,DouyinMenuTrials.Case.STICKER)

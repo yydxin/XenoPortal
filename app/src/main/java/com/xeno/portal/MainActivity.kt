@@ -87,7 +87,7 @@ private fun PortalScreen(activity: MainActivity, revision: Int) {
         Column(Modifier.safeDrawingPadding()) {
             Column(Modifier.padding(horizontal=20.dp, vertical=12.dp)) {
                 Text("XenoPortal", style=MaterialTheme.typography.headlineLarge)
-                Text("诊断版 2.0.3 · 直接保存与抖音分组采样", style=MaterialTheme.typography.bodyMedium)
+                Text("诊断版 2.0.4 · 评论图片选图截图", style=MaterialTheme.typography.bodyMedium)
             }
             PrimaryTabRow(selectedTabIndex=tab) {
                 listOf("设置", "验证工具", "诊断").forEachIndexed { index, label -> Tab(selected=tab==index, onClick={tab=index}, text={Text(label)}) }
@@ -140,6 +140,8 @@ private fun PortalScreen(activity: MainActivity, revision: Int) {
                         Text("独立验证显示与分享", style=MaterialTheme.typography.titleLarge)
                         Text("先使用合成图测试岛和分享，避免把显示失败误判成触发失败。所有截图和文件仅留在本机缓存。")
                         Button(onClick={MediaSessions.sample(activity)}, Modifier.fillMaxWidth()) { Text("生成本地合成测试图片") }
+                        Button(onClick={PortalActions.commentAfterDelay(activity)},enabled=enabled,modifier=Modifier.fillMaxWidth()) {Text("5秒后选取抖音评论图片")}
+                        Text("切到抖音评论列表，先手动关闭长按/分享菜单并停止滚动。截屏后从临时面板点选一张，再请求系统岛。此入口不是自动长按；未选择的预览不写入磁盘，表情包仅截当前帧。")
                         OutlinedButton(onClick={PortalActions.captureAfterDelay(activity)}, enabled=enabled,modifier=Modifier.fillMaxWidth()) { Text("5秒后截取全屏诊断图") }
                         Text("点击后切到目标应用；这是用户主动的全屏截图，不是自动长按取图，也不等于原图。不要截取不希望保留的敏感界面。")
                         MediaSessions.current?.let { session ->
@@ -234,7 +236,13 @@ private fun Toggle(title: String, detail: String, value: Boolean, change: (Boole
 
 object PortalActions {
     private var pending: Runnable? = null
-    fun cancel() { pending?.let(Diagnostics.main::removeCallbacks); pending=null }
+    fun cancel() { pending?.let(Diagnostics.main::removeCallbacks); pending=null; PortalAccessibilityService.active?.commentPicker?.cancel() }
+    fun commentAfterDelay(context:android.content.Context) {
+        cancel()
+        if(!Preferences.enabled(context) || PortalAccessibilityService.active==null) {Diagnostics.stage(4,"阻断","先开启总开关并连接无障碍服务");return}
+        Diagnostics.stage(4,"进行中","5秒后选图截图；请切到抖音评论列表，关闭菜单并停止滚动")
+        pending=Runnable {pending=null;PortalAccessibilityService.active?.commentPicker?.capture() ?: Diagnostics.stage(4,"阻断","选图截图时无障碍已断开")}.also {Diagnostics.main.postDelayed(it,5000)}
+    }
     fun nativeAfterDelay(context: android.content.Context) {
         cancel()
         val app=context.applicationContext

@@ -14,6 +14,7 @@ class PortalAccessibilityService : AccessibilityService() {
         @Volatile private var connection = java.lang.ref.WeakReference<PortalAccessibilityService>(null)
         val active: PortalAccessibilityService? get() = connection.get()
     }
+    val commentPicker by lazy { CommentImagePicker(this) }
     private var overlayView: android.view.View? = null
     private var overlayWindowManager: android.view.WindowManager? = null
     fun attachOverlayWindow(view: android.view.View, params: android.view.WindowManager.LayoutParams) {
@@ -46,6 +47,7 @@ class PortalAccessibilityService : AccessibilityService() {
     override fun onDestroy() { detach(); super.onDestroy() }
     private fun detach() {
         pendingTree?.let(Diagnostics.main::removeCallbacks);pendingTree=null
+        commentPicker.cancel()
         hideOverlayWindow()
         if (active === this) {
             DouyinMenuTrials.finish("无障碍服务断开")
@@ -112,7 +114,7 @@ class PortalAccessibilityService : AccessibilityService() {
             return
         }
         try {
-            val timestamp = android.text.format.DateFormat.format("HH:mm:ss.SSS", System.currentTimeMillis())
+            val timestamp = java.text.SimpleDateFormat("HH:mm:ss.SSS", java.util.Locale.ROOT).format(java.util.Date())
             val output = StringBuilder("captured=$timestamp $reason eventPackage=$eventPackage eventWindow=$eventWindowId\n")
             val menuWindows = mutableListOf<MenuWindow>()
             val treeLines = mutableListOf<String>()
@@ -147,7 +149,7 @@ class PortalAccessibilityService : AccessibilityService() {
                             val cls = node.className?.toString().orEmpty()
                             if (text.isNotBlank()) labels.add(text.trim())
                             if (desc.isNotBlank()) labels.add(desc.trim())
-                            val imageLike = listOf("Image", "Picture", "Video", "SurfaceView", "TextureView").any { cls.contains(it, true) }
+                            val imageLike = CommentImageRules.mediaLike(cls,desc)
                             if (text.isNotBlank() || desc.isNotBlank() || imageLike) {
                                 val bounds = Rect(); node.getBoundsInScreen(bounds)
                                 val line = "w=$windowId text=$text desc=$desc id=${node.viewIdResourceName} class=$cls click=${node.isClickable} longClick=${node.isLongClickable} visible=${node.isVisibleToUser} bounds=$bounds mediaCandidate=$imageLike"

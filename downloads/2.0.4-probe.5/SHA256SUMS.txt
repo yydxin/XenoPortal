@@ -1,0 +1,4 @@
+d3f14a06408ab68678bbb04d01566f2192504a27495c2008c1bebd7b21e3aefc  INSTALL.zh-CN.txt
+a16d814cec27e4af42168159d6146941fe5445c25cc8e9e7cafe97b3b7139444  XenoPortal-2.0.4-probe.5-APK.zip
+af150a142ad3bcedb9b298e39ba85b8474fcbdd6a89bb8ca79c4292fd60e2253  XenoPortal-2.0.4-probe.5-release.apk
+8bd84b8f7049c305e1a8c82f256e01447404dc3f04e1286b6c011b725e1d7ddc  XenoPortal-2.0.4-probe.5-source.zip

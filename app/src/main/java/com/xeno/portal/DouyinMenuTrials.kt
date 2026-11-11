@@ -13,7 +13,7 @@ data class MenuWindow(val packageName:String, val windowId:Int, val labels:Set<S
 /** Explicit, time-bounded evidence collection. It never clicks, captures or shares media. */
 object DouyinMenuTrials {
     enum class Case(val title:String) { IMAGE("评论图片"), STICKER("评论表情包"), SHARE("普通分享面板") }
-    data class Result(val samples:Int, val candidate:Boolean, val snapshot:String, val before:String)
+    data class Result(val samples:Int, val candidate:Boolean, val snapshot:String, val before:String,val panel:String="")
     var results by mutableStateOf<Map<Case,Result>>(emptyMap())
         private set
     var active by mutableStateOf<Case?>(null)
@@ -44,13 +44,19 @@ object DouyinMenuTrials {
         if(douyin.isEmpty()) return
         val candidate=douyin.any{it.candidate}
         val old=results[case]
+        val panel=when {
+            candidate -> "评论图片菜单候选"
+            douyin.any { "添加到表情" in it.labels } -> "表情菜单候选"
+            douyin.any { "复制链接" in it.labels && it.labels.any { label -> label in setOf("微信好友","朋友圈","分享到","分享给") } } -> "普通分享菜单候选（待审查）"
+            else -> ""
+        }
         // Avoid replacing a visible panel with ordinary content after returning to this app.
-        val before=if(candidate && now-previousAt in 0..2000) previous else "无2秒内前置快照；不能推断原触点"
-        val summary="case=${case.title} samples=${(old?.samples?:0)+1} sameWindowCandidate=$candidate windows=${douyin.size} mediaNodes=${douyin.sumOf{it.mediaNodes.size}}；节点不等于长按目标\n"
-        results=results+(case to Result((old?.samples?:0)+1,candidate,(summary+snapshot).take(100000),before.take(100000)))
-        if(candidate) {
-            Diagnostics.stage(3,"候选", "${case.title}：同一抖音窗口含“分享评论给”和“保存到相册”；坐标未知，仅保留证据，不自动截图/保存")
-            finish("捕获同窗口菜单候选")
+        val before=if(panel.isNotBlank() && now-previousAt in 0..2000) previous else "无2秒内前置快照；不能推断原触点"
+        val summary="case=${case.title} samples=${(old?.samples?:0)+1} sameWindowCandidate=$candidate panel=${panel.ifBlank { "仅内容，非菜单证据" }} windows=${douyin.size} mediaNodes=${douyin.sumOf{it.mediaNodes.size}}；节点不等于长按目标\n"
+        results=results+(case to Result((old?.samples?:0)+1,candidate,(summary+snapshot).take(100000),before.take(100000),panel))
+        if(panel.isNotBlank()) {
+            Diagnostics.stage(3,"候选", "${case.title}：$panel；坐标未知，仅保留证据，不自动截图/保存")
+            finish("捕获$panel")
         } else {
             previous=snapshot.take(100000);previousAt=now
             status="${case.title}已读取${(old?.samples?:0)+1}次，尚无同窗口菜单候选；打开菜单后可点“结束本组”保留对照"
@@ -63,13 +69,16 @@ object DouyinMenuTrials {
         val r=results[case]
         status="${case.title}：$reason；采样=${r?.samples?:0}，候选=${r?.candidate?:false}。${comparison()}"
         Diagnostics.log("DOUYIN_TRIAL",status)
+        Diagnostics.stage(3,if(r?.panel?.isNotBlank()==true) "待验证" else "证据不足",status)
         previous="";previousAt=0L
     }
     fun comparison():String {
         val normal=results[Case.SHARE]
         if(normal?.candidate==true) return "普通分享也命中：该菜单规则不具排他性，禁止自动触发"
         if(normal==null || results[Case.IMAGE]==null || results[Case.STICKER]==null) return "三组证据尚未齐全"
-        return "三组已记录，需人工审查真实菜单与图片区域；未启用自动化"
+        if(normal.panel.isBlank()) return "普通分享仅记录到内容页，未取得分享面板；不能视为排他性对照通过"
+        if(results[Case.IMAGE]?.panel.isNullOrBlank() || results[Case.STICKER]?.panel.isNullOrBlank()) return "图片/表情菜单证据不足；未启用自动化"
+        return "三组面板候选已记录，仍需人工审查；未启用自动化"
     }
     fun report(maxSnapshotChars:Int=Int.MAX_VALUE):String = "抖音分组采样\n$status\n${comparison()}\n"+Case.entries.joinToString("\n\n") { case ->
         val r=results[case]

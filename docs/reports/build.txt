@@ -60,8 +60,9 @@ Daemon will be stopped at the end of the build
 > Task :app:processDebugManifest UP-TO-DATE
 > Task :app:processDebugManifestForPackage UP-TO-DATE
 > Task :app:processDebugResources UP-TO-DATE
-> Task :app:compileReleaseKotlin
 > Task :app:compileDebugKotlin
+> Task :app:compileReleaseKotlin
+> Task :app:javaPreCompileDebug UP-TO-DATE
 > Task :app:compileReleaseJavaWithJavac NO-SOURCE
 > Task :app:dexBuilderRelease
 > Task :app:mergeReleaseGlobalSynthetics UP-TO-DATE
@@ -70,7 +71,6 @@ Daemon will be stopped at the end of the build
 > Task :app:compileReleaseArtProfile
 > Task :app:processReleaseJavaRes UP-TO-DATE
 > Task :app:mergeReleaseJavaResource UP-TO-DATE
-> Task :app:javaPreCompileDebug UP-TO-DATE
 > Task :app:compileDebugJavaWithJavac NO-SOURCE
 > Task :app:mergeDebugShaders UP-TO-DATE
 > Task :app:compileDebugShaders NO-SOURCE
@@ -97,26 +97,22 @@ Daemon will be stopped at the end of the build
 > Task :app:assembleDebug
 > Task :app:bundleDebugClassesToRuntimeJar
 > Task :app:bundleDebugClassesToCompileJar
-
 > Task :app:compileDebugUnitTestKotlin
-w: file:///workspace/XenoPortal/app/src/test/java/com/xeno/portal/NativeLiveUpdatesTest.kt:30:22 'field contentView: RemoteViews!' is deprecated. Deprecated in Java.
-w: file:///workspace/XenoPortal/app/src/test/java/com/xeno/portal/NativeLiveUpdatesTest.kt:31:22 'field bigContentView: RemoteViews!' is deprecated. Deprecated in Java.
-
 > Task :app:preDebugUnitTestBuild UP-TO-DATE
 > Task :app:javaPreCompileDebugUnitTest UP-TO-DATE
 > Task :app:compileDebugUnitTestJavaWithJavac NO-SOURCE
-> Task :app:packageDebugUnitTestForUnitTest UP-TO-DATE
-> Task :app:processDebugUnitTestManifest UP-TO-DATE
-> Task :app:generateDebugUnitTestConfig UP-TO-DATE
+> Task :app:packageDebugUnitTestForUnitTest
+> Task :app:processDebugUnitTestManifest
+> Task :app:generateDebugUnitTestConfig
 > Task :app:processDebugUnitTestJavaRes UP-TO-DATE
 > Task :app:lintVitalAnalyzeRelease
 > Task :app:testDebugUnitTest
 > Task :app:preDebugAndroidTestBuild SKIPPED
 > Task :app:generateDebugAndroidTestResValues UP-TO-DATE
-> Task :app:lintVitalReportRelease
 > Task :app:generateDebugAndroidTestLintModel
-> Task :app:lintVitalRelease
+> Task :app:lintVitalReportRelease
 > Task :app:generateDebugLintReportModel
+> Task :app:lintVitalRelease
 > Task :app:generateDebugUnitTestLintModel
 > Task :app:packageRelease
 > Task :app:createReleaseApkListingFileRedirect
@@ -130,5 +126,5 @@ Wrote HTML report to file:///workspace/XenoPortal/app/build/reports/lint-results
 
 > Task :app:lintDebug
 
-BUILD SUCCESSFUL in 1m 30s
-105 actionable tasks: 26 executed, 79 up-to-date
+BUILD SUCCESSFUL in 1m 24s
+105 actionable tasks: 29 executed, 76 up-to-date

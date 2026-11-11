@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="com.xeno.portal.DouyinMenuTrialsTest" tests="2" skipped="0" failures="0" errors="0" timestamp="2026-11-11T10:50:10.264Z" hostname="1ec1df0e373f" time="0.257">
+<testsuite name="com.xeno.portal.DouyinMenuTrialsTest" tests="3" skipped="0" failures="0" errors="0" timestamp="2026-11-11T11:05:44.670Z" hostname="1ec1df0e373f" time="0.552">
   <properties/>
-  <testcase name="anchorsInDifferentWindowsDoNotCountAndOrdinaryShareCounterexampleStaysBlocked" classname="com.xeno.portal.DouyinMenuTrialsTest" time="0.159"/>
-  <testcase name="samplingExpiresWithoutInventingMenuEvidence" classname="com.xeno.portal.DouyinMenuTrialsTest" time="0.061"/>
+  <testcase name="anchorsInDifferentWindowsDoNotCountAndOrdinaryShareCounterexampleStaysBlocked" classname="com.xeno.portal.DouyinMenuTrialsTest" time="0.245"/>
+  <testcase name="stickerMenuIsRetainedButCommentListIsNotAcceptedAsOrdinaryShareEvidence" classname="com.xeno.portal.DouyinMenuTrialsTest" time="0.174"/>
+  <testcase name="samplingExpiresWithoutInventingMenuEvidence" classname="com.xeno.portal.DouyinMenuTrialsTest" time="0.13"/>
   <system-out><![CDATA[]]></system-out>
   <system-err><![CDATA[]]></system-err>
 </testsuite>

@@ -134,4 +134,30 @@ distributionUrl=https\://services.gradle.org/distributions/gradle-8.13-bin.zip
    </lint>
    ```
 
-0 errors, 18 warnings
+/workspace/XenoPortal/app/src/main/java/com/xeno/portal/CommentImagePicker.kt:114: Warning: Do not concatenate text displayed with setText. Use resource string with placeholders. [SetTextI18n]
+        panel.addView(TextView(service).apply {text="临时选图面板 · 点选要分享的图片\n冻结截图，仅当前帧；20秒后丢弃。不是自动长按。";setTextColor(android.graphics.Color.WHITE)})
+                                                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/workspace/XenoPortal/app/src/main/java/com/xeno/portal/CommentImagePicker.kt:114: Warning: String literal in setText can not be translated. Use Android resources instead. [SetTextI18n]
+        panel.addView(TextView(service).apply {text="临时选图面板 · 点选要分享的图片\n冻结截图，仅当前帧；20秒后丢弃。不是自动长按。";setTextColor(android.graphics.Color.WHITE)})
+                                                                        ~~~~~~~~~~~~~~~~~~~~~~~~
+/workspace/XenoPortal/app/src/main/java/com/xeno/portal/CommentImagePicker.kt:119: Warning: Do not concatenate text displayed with setText. Use resource string with placeholders. [SetTextI18n]
+            tile.addView(Button(service).apply {text="选择 ${index+1}";setOnClickListener {
+                                                     ~~~~~~~~~~~~~~~
+/workspace/XenoPortal/app/src/main/java/com/xeno/portal/CommentImagePicker.kt:119: Warning: Do not concatenate text displayed with setText. Use resource string with placeholders. [SetTextI18n]
+            tile.addView(Button(service).apply {text="选择 ${index+1}";setOnClickListener {
+                                                           ~~~~~~~
+
+   Explanation for issues of type "SetTextI18n":
+   When calling TextView#setText
+   * Never call Number#toString() to format numbers; it will not handle
+   fraction separators and locale-specific digits properly. Consider using
+   String#format with proper format specifications (%d or %f) instead.
+   * Do not pass a string literal (e.g. "Hello") to display text. Hardcoded
+   text can not be properly translated to other languages. Consider using
+   Android resource strings instead.
+   * Do not build messages by concatenating text chunks. Such messages can not
+   be properly translated.
+
+   https://developer.android.com/guide/topics/resources/localization.html
+
+0 errors, 22 warnings
