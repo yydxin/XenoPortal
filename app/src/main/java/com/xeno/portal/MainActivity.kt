@@ -76,7 +76,7 @@ private fun PortalScreen(activity: MainActivity, revision: Int) {
     var threshold by remember { mutableFloatStateOf(Preferences.threshold(activity).toFloat()) }
     var treeWarning by remember { mutableStateOf(false) }
     var exportWarning by remember { mutableStateOf(false) }
-    var confirmation by remember { mutableStateOf("") }
+
     var installed by remember(revision) { mutableStateOf(Sharing.installed(activity)) }
     val permissions = rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { result ->
         Diagnostics.log("PERMISSION", result.entries.joinToString { "${it.key}=${it.value}" }); activity.revision++
@@ -86,7 +86,7 @@ private fun PortalScreen(activity: MainActivity, revision: Int) {
         Column(Modifier.safeDrawingPadding()) {
             Column(Modifier.padding(horizontal=20.dp, vertical=12.dp)) {
                 Text("XenoPortal", style=MaterialTheme.typography.headlineLarge)
-                Text("诊断版 2.0 · 先看见问题，再启用自动化", style=MaterialTheme.typography.bodyMedium)
+                Text("诊断版 2.0.1 · 免Root菜单验证", style=MaterialTheme.typography.bodyMedium)
             }
             PrimaryTabRow(selectedTabIndex=tab) {
                 listOf("设置", "验证工具", "诊断").forEachIndexed { index, label -> Tab(selected=tab==index, onClick={tab=index}, text={Text(label)}) }
@@ -100,6 +100,9 @@ private fun PortalScreen(activity: MainActivity, revision: Int) {
                             Text(ProbePolicy.displayRoute(PortalDisplay.probe.protocol,PortalDisplay.probe.permission,PortalDisplay.probe.notifications,overlay))
                             Text(PortalDisplay.probe.detail, style=MaterialTheme.typography.bodySmall)
                             Text("当前窗口：${PortalDisplay.visible}")
+                            Text("最近请求：${PortalDisplay.lastSubmission}")
+                            Text("系统观察：${PortalDisplay.lastObservation}")
+                            Text(PortalDisplay.visualConfirmation)
                         } }
                         Toggle("总开关", "开启事件白名单诊断与主动测试；不会自动保存", enabled) {
                             enabled=it; Preferences.set(activity,"enabled",it)
@@ -137,14 +140,15 @@ private fun PortalScreen(activity: MainActivity, revision: Int) {
                             PreviewImage(session)
                             Button(onClick={PortalDisplay.show(activity)}, enabled=enabled,modifier=Modifier.fillMaxWidth()) { Text("按检测结果显示（官方 / 自绘）") }
                             OutlinedButton(onClick={PortalDisplay.show(activity,officialOnly=true)},enabled=enabled,modifier=Modifier.fillMaxWidth()) { Text("单独发送官方探针（观察是否退化）") }
-                            Text("官方探针未配置小米平台 App Id/签名权限。notify 不报错不能证明上岛；没有岛时可强制自绘。8秒无操作收起。")
+                            OutlinedButton(onClick={PortalActions.officialAfterDelay(activity)},enabled=enabled,modifier=Modifier.fillMaxWidth()) { Text("5秒后测试官方超级岛（先返回桌面）") }
+                            Text("延时官方测试显示30秒，并在发送500ms后检查系统是否登记通知。其他显示测试8秒收起。没有登记平台 App Id，仍可能被系统鉴权拒绝；不会把普通通知当作上岛成功。")
                             Button(onClick={PortalDisplay.open(activity,session,"more")}, Modifier.fillMaxWidth()) { Text("打开全部分享目标（验证 S6 / S7）") }
                         }
-                        Row(horizontalArrangement=Arrangement.spacedBy(8.dp)) {
-                            OutlinedButton(onClick={confirmation="本次人工确认：看到了显示。该记录不代替触发验收"; Diagnostics.log("MANUAL",confirmation)}) { Text("看到了") }
-                            OutlinedButton(onClick={confirmation="本次人工确认：没有看到显示"; Diagnostics.log("MANUAL",confirmation)}) { Text("没看到") }
-                        }
-                        Text(confirmation)
+                        Text("请按实际看到的形态确认本次官方测试：")
+                        OutlinedButton(onClick={PortalDisplay.confirmVisual("人工确认：看到了官方超级岛")},Modifier.fillMaxWidth()) { Text("看到了官方超级岛") }
+                        OutlinedButton(onClick={PortalDisplay.confirmVisual("人工确认：仅看到普通通知，没有官方超级岛")},Modifier.fillMaxWidth()) { Text("仅看到普通通知") }
+                        OutlinedButton(onClick={PortalDisplay.confirmVisual("人工确认：没有看到通知或超级岛")},Modifier.fillMaxWidth()) { Text("什么都没出现") }
+                        Text(PortalDisplay.visualConfirmation)
                         OutlinedButton(onClick={PortalDisplay.query(activity)},Modifier.fillMaxWidth()) { Text("重新检测官方能力") }
                         OutlinedButton(onClick={PortalActions.cancel(); PortalDisplay.close(activity)},Modifier.fillMaxWidth()) { Text("立即停止测试并收起") }
                         Text("分享缓存租期10分钟，进程存活时清理，进程终止后下次打开清扫；其他未分享显示会话超时清除。对方没有通用完成回执，启动分享不表示已收到。")
@@ -160,20 +164,23 @@ private fun PortalScreen(activity: MainActivity, revision: Int) {
                                 Text(stage.detail); Text(stage.at,style=MaterialTheme.typography.bodySmall)
                             } }
                         }
-                        Toggle("调试：记录窗口文字树", "可能包含聊天内容；仅采样白名单窗口，1.5秒限频，最多1000节点。关闭后不再采集，历史日志需手动清除。",trees) {
+                        Toggle("调试：记录窗口文字树", "可能包含聊天内容；仅采样白名单窗口，普通事件1.5秒限频、关键窗口变化最快250ms，最多1000节点。关闭后不再采集，历史日志需手动清除。",trees) {
                             if(it) treeWarning=true else {trees=false;Preferences.set(activity,"tree",false);Diagnostics.updateTree("文字树采样已关闭")}
                         }
                         OutlinedButton(onClick={PortalAccessibilityService.active?.sampleWindows() ?: Diagnostics.stage(0,"阻断","无障碍未连接")},Modifier.fillMaxWidth()) { Text("立即采样所有窗口（需开启调试）") }
-                        Text("菜单只记录候选，不会点击“保存到相册”。请分别采集长按图片与普通分享面板作为对照。")
+                        Text("菜单只记录候选，不会点击“保存到相册”。请在开启调试后进入抖音，分别采集长按图片/表情包与普通分享面板；切回本页会保留最近成功的白名单窗口快照。")
                         Row(horizontalArrangement=Arrangement.spacedBy(8.dp)) {
-                            Button(onClick={val text=Diagnostics.stages.entries.joinToString("\n"){"S${it.key} ${it.value}"}+"\n"+Diagnostics.lines.joinToString("\n");(activity.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as ClipboardManager).setPrimaryClip(ClipData.newPlainText("XenoPortal",text))}) { Text("复制日志") }
+                            Button(onClick={val text=Diagnostics.textReport();(activity.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as ClipboardManager).setPrimaryClip(ClipData.newPlainText("XenoPortal",text))}) { Text("复制日志") }
                             OutlinedButton(onClick={exportWarning=true}) { Text("分享导出") }
                             OutlinedButton(onClick={Diagnostics.clear()}) { Text("清除") }
                         }
                         Text("最近200行日志（历史进程日志不代表当前服务在线）")
                         SelectionContainer { Text(Diagnostics.lines.joinToString("\n"),style=MaterialTheme.typography.bodySmall) }
-                        Text("最近窗口快照",style=MaterialTheme.typography.titleMedium)
+                        Text("最近采样：${Diagnostics.treeAttempt}",style=MaterialTheme.typography.bodySmall)
+                        Text("最近成功读取的白名单窗口快照",style=MaterialTheme.typography.titleMedium)
                         SelectionContainer { Text(Diagnostics.tree,style=MaterialTheme.typography.bodySmall) }
+                        Text("最近菜单候选快照（切回本页后仍保留）",style=MaterialTheme.typography.titleMedium)
+                        SelectionContainer { Text(Diagnostics.menuTree,style=MaterialTheme.typography.bodySmall) }
                     }
                 }
                 Spacer(Modifier.height(16.dp))
@@ -202,6 +209,18 @@ private fun Toggle(title: String, detail: String, value: Boolean, change: (Boole
 object PortalActions {
     private var pending: Runnable? = null
     fun cancel() { pending?.let(Diagnostics.main::removeCallbacks); pending=null }
+    fun officialAfterDelay(context: android.content.Context) {
+        cancel()
+        if (!Preferences.enabled(context) || MediaSessions.current == null) {
+            Diagnostics.stage(5,"阻断","先打开总开关并生成测试图片"); return
+        }
+        val app=context.applicationContext
+        Diagnostics.stage(5,"进行中","5秒后发送官方通知；请按Home返回桌面；显示30秒供观察")
+        pending=Runnable {
+            pending=null
+            PortalDisplay.show(app,officialOnly=true,observationSeconds=30)
+        }.also { Diagnostics.main.postDelayed(it,5000) }
+    }
     fun captureAfterDelay(c: android.content.Context) {
         cancel()
         if (PortalAccessibilityService.active==null) {Diagnostics.stage(4,"阻断","先启用无障碍并确认 S0 已连接");return}

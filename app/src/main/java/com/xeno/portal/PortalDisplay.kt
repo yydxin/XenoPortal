@@ -34,6 +34,16 @@ object PortalDisplay {
     const val NOTIFICATION_ID = 200
     var probe by mutableStateOf(FocusProbe())
         private set
+    var lastSubmission by mutableStateOf("尚未提交显示请求")
+        private set
+    var lastObservation by mutableStateOf("尚未检查通知是否登记")
+        private set
+    var visualConfirmation by mutableStateOf("官方超级岛实际显示尚未确认")
+        private set
+    fun confirmVisual(result: String) {
+        visualConfirmation = result
+        Diagnostics.log("VISUAL_CONFIRM", "$result；最近请求=$lastSubmission；最近观察=$lastObservation")
+    }
     var visible by mutableStateOf("未显示")
         private set
     private var expiration: Runnable? = null
@@ -59,11 +69,11 @@ object PortalDisplay {
             val granted = nm.areNotificationsEnabled() && nm.getNotificationChannel(CHANNEL)?.importance != NotificationManager.IMPORTANCE_NONE
             val result = FocusProbe(protocol, permission, granted, "protocol=$protocol canShowFocus=$permission notification=$granted channel=$CHANNEL ${error.ifBlank { "查询结束；不代表签名鉴权或渲染成功" }}")
             Diagnostics.main.post {
-                probe = result; Diagnostics.stage(5, "探测", result.detail); after?.invoke()
+                probe = result; Diagnostics.log("CAPABILITY", result.detail); after?.invoke()
             }
         }
     }
-    fun show(c: Context, officialOnly: Boolean = false) {
+    fun show(c: Context, officialOnly: Boolean = false, observationSeconds: Int = 8) {
         if (!Preferences.enabled(c)) { Diagnostics.stage(5, "阻断", "总开关关闭"); return }
         val session = MediaSessions.current
         if (session == null || MediaSessions.find(c, session.id) == null) { Diagnostics.stage(5, "阻断", "先生成测试图或手动截图"); return }
@@ -75,7 +85,7 @@ object PortalDisplay {
             if (officialOnly || (!Preferences.forceOverlay(c) && probe.notifications && probe.permission == true && probe.protocol >= 2)) {
                 if (!probe.notifications) { Diagnostics.stage(5, "阻断", "通知权限/渠道关闭，请先授权"); return@query }
                 try {
-                    official(c, session)
+                    official(c, session, observationSeconds)
                     visible = "官方探针已提交，是否上岛待人工确认"
                 } catch (e: Exception) {
                     Diagnostics.exception(5, "通知构建/发送", e)
@@ -85,27 +95,27 @@ object PortalDisplay {
             if (visible != "未显示") {
                 expiration = Runnable {
                     close(c); MediaSessions.discardIfUnshared(c, session.id)
-                    Diagnostics.log("DISPLAY", "8秒到期：取消通知/窗口，清理未分享会话")
-                }.also { Diagnostics.main.postDelayed(it, 8000) }
+                    Diagnostics.log("DISPLAY", "${observationSeconds}秒到期：取消通知/窗口，清理未分享会话")
+                }.also { Diagnostics.main.postDelayed(it, observationSeconds * 1000L) }
             }
         }
     }
     private fun pending(c: Context, session: MediaSession, target: String): PendingIntent {
         val intent = Intent(c, ShareActivity::class.java).apply {
             data = Uri.parse("xenoportal://session/${session.id}/$target")
-            putExtra("session", session.id); putExtra("target", target)
+            putExtra("session", session.id); putExtra("target", target); putExtra("source", "official-notification")
         }
         return PendingIntent.getActivity(c, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
     }
-    fun open(c: Context, session: MediaSession, target: String) {
+    fun open(c: Context, session: MediaSession, target: String, source: String = "manual-tools") {
         try {
             c.startActivity(Intent(c, ShareActivity::class.java).apply {
-                putExtra("session", session.id); putExtra("target", target); addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                putExtra("session", session.id); putExtra("target", target); putExtra("source", source); addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             })
             close(c)
         } catch (e: Exception) { Diagnostics.exception(6, "打开分享目标页", e) }
     }
-    private fun official(c: Context, session: MediaSession) {
+    private fun official(c: Context, session: MediaSession, seconds: Int) {
         val thumb = BitmapFactory.decodeFile(session.file.path)?.let { bitmap ->
             android.graphics.Bitmap.createScaledBitmap(bitmap, 224, 224, true).also { if (it !== bitmap) bitmap.recycle() }
         } ?: error("缩略图无法解码")
@@ -120,16 +130,16 @@ object PortalDisplay {
             actions.put(JSONObject().put("type", 0).put("action", key).put("clickWithCollapse", true))
         }
         val image = JSONObject().put("type", 1).put("pic", "miui.focus.pic_preview")
-        val island = JSONObject().put("islandProperty", 2).put("islandTimeout", 8)
+        val island = JSONObject().put("islandProperty", 2).put("islandTimeout", seconds)
             .put("bigIslandArea", JSONObject().put("imageTextInfoLeft", JSONObject().put("type", 1).put("picInfo", image).put("textInfo", JSONObject().put("title", "分享").put("content", "测试"))))
             .put("smallIslandArea", JSONObject().put("picInfo", image))
         val param = JSONObject().put("protocol", 1).put("business", "xeno_share_probe")
             .put("islandFirstFloat", true).put("enableFloat", false).put("updatable", false)
             .put("filterWhenNoPermission", false).put("ticker", "分享测试").put("aodTitle", "XenoPortal 测试")
             .put("param_island", island).put("actions", actions)
-        if (probe.protocol >= 3) param.put("iconTextInfo", JSONObject().put("title", "分享图片").put("content", "点卡片查看全部目标")
-            .put("animIconInfo", JSONObject().put("type", 0).put("src", "miui.focus.pic_preview")))
-        else param.put("chatInfo", JSONObject().put("title", "分享图片").put("content", "点卡片查看全部目标").put("picProfile", "miui.focus.pic_preview"))
+        // Template 12: static chatInfo + ordinary actions is documented for OS2 and OS3.
+        // Avoid animation enum discrepancies in the OS3-only iconTextInfo example.
+        param.put("chatInfo", JSONObject().put("title", "分享图片").put("content", "点卡片查看全部目标").put("picProfile", "miui.focus.pic_preview"))
         val json = JSONObject().put("param_v2", param).toString()
         check(json.toByteArray(Charsets.UTF_8).size <= 3072) { "payload 超过3072字节" }
         val extras = Bundle().apply {
@@ -137,9 +147,29 @@ object PortalDisplay {
         }
         val builder = Notification.Builder(c, CHANNEL).setSmallIcon(R.drawable.ic_portal)
             .setContentTitle("XenoPortal 分享测试").setContentText("点击选择分享目标；官方岛实际渲染待验证")
-            .setContentIntent(pending(c, session, "more")).setAutoCancel(true).setTimeoutAfter(8000).addExtras(extras)
+            .setContentIntent(pending(c, session, "more")).setAutoCancel(true).setTimeoutAfter(seconds * 1000L).addExtras(extras)
         c.getSystemService(NotificationManager::class.java).notify(NOTIFICATION_ID, builder.build())
-        Diagnostics.stage(5, "已提交", "${probe.detail}；notify未抛异常；未配置平台APP_ID/签名权限，不能宣称已上岛")
+        lastSubmission = "官方通知 session=${session.id} template=12 id=$NOTIFICATION_ID duration=${seconds}s"
+        lastObservation = "等待500ms检查系统登记"
+        visualConfirmation = "本次官方超级岛实际显示尚未确认"
+        Diagnostics.stage(5, "已提交", "${probe.detail}；$lastSubmission；notify未抛异常；无平台APP_ID，是否上岛待验证")
+        val ticket = generation
+        val app = c.applicationContext
+        Diagnostics.main.postDelayed({
+            if (ticket == generation) {
+                try {
+                    val nm = app.getSystemService(NotificationManager::class.java)
+                    val entries = nm.activeNotifications.filter { it.id == NOTIFICATION_ID }
+                    val importance = nm.getNotificationChannel(CHANNEL)?.importance
+                    lastObservation = "500ms后本应用活跃通知=${entries.size} 渠道importance=$importance；不等于已渲染超级岛"
+                    Diagnostics.stage(5, if (entries.isEmpty()) "未观察到登记" else "系统已登记", "$lastSubmission；$lastObservation")
+                } catch (e: Exception) {
+                    lastObservation = "读取本应用活跃通知失败:${e.javaClass.simpleName}"
+                    Diagnostics.exception(5,"活跃通知检查",e)
+                }
+            }
+        },500)
+
     }
     private fun showOverlay(c: Context, session: MediaSession) {
         val service = PortalAccessibilityService.active
@@ -157,7 +187,7 @@ object PortalDisplay {
             titleRow.addView(Button(service).apply { text="关闭"; setOnClickListener { close(c); MediaSessions.discardIfUnshared(c,session.id) } })
             panel.addView(titleRow)
             val row = LinearLayout(service).apply { orientation = LinearLayout.HORIZONTAL }
-            Sharing.installed(c).forEach { target -> row.addView(Button(service).apply { text = target.name; setOnClickListener { open(service, session, target.id) } }) }
+            Sharing.installed(c).forEach { target -> row.addView(Button(service).apply { text = target.name; setOnClickListener { open(service, session, target.id, "accessibility-overlay") } }) }
             panel.addView(HorizontalScrollView(service).apply { addView(row) })
             val width = (service.resources.displayMetrics.widthPixels - dp(24)).coerceAtLeast(dp(200))
             val params = WindowManager.LayoutParams(width, WindowManager.LayoutParams.WRAP_CONTENT, WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY,
@@ -166,6 +196,7 @@ object PortalDisplay {
             }
             service.attachOverlayWindow(panel, params)
             visible = "自绘岛（无障碍覆盖窗口）"
+            lastSubmission = "无障碍覆盖窗口 session=${session.id}"
             Diagnostics.stage(5, "已显示请求", "${ProbePolicy.displayRoute(probe.protocol,probe.permission,probe.notifications,Preferences.forceOverlay(c))}；addView未抛异常，实际可见性需人工确认")
         } catch (e: Exception) { Diagnostics.exception(5, "无障碍覆盖窗口", e) }
     }

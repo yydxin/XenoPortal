@@ -19,6 +19,61 @@ import java.io.File
 @Config(sdk = [35])
 @LooperMode(LooperMode.Mode.PAUSED)
 class RuntimeSmokeTest {
+    @Test fun emptyScanKeepsLastUsefulTargetSnapshotAndCopyIncludesIt() {
+        Diagnostics.updateTree("captured=17:00 Douyin 图片节点 bounds=Rect(10,20,100,200)")
+        shadowOf(Looper.getMainLooper()).idle()
+        Diagnostics.windowScan("desktop visited=0", "empty", 0)
+        shadowOf(Looper.getMainLooper()).idle()
+        assertTrue(Diagnostics.tree.contains("Douyin"))
+        assertTrue(Diagnostics.treeAttempt.contains("visited=0"))
+        assertTrue(Diagnostics.textReport().contains("图片节点"))
+        assertTrue(Diagnostics.textReport().contains("desktop visited=0"))
+    }
+    @Test fun capabilityRefreshDoesNotEraseNotificationSubmission() {
+        val c=RuntimeEnvironment.getApplication()
+        Diagnostics.stage(5,"已提交","notification-test-id")
+        shadowOf(Looper.getMainLooper()).idle()
+        PortalDisplay.query(c)
+        val finished=java.util.concurrent.CountDownLatch(1)
+        Diagnostics.io.execute { finished.countDown() }
+        assertTrue(finished.await(5,java.util.concurrent.TimeUnit.SECONDS))
+        shadowOf(Looper.getMainLooper()).idle()
+        assertEquals("已提交",Diagnostics.stages.getValue(5).state)
+        assertEquals("notification-test-id",Diagnostics.stages.getValue(5).detail)
+    }
+    @Test fun menuCandidateSnapshotSurvivesLaterOrdinaryWindowScans() {
+        Diagnostics.windowScan("menu","menu-save-picture",8,true)
+        Diagnostics.windowScan("normal","ordinary-app-content",20,false)
+        shadowOf(Looper.getMainLooper()).idle()
+        assertEquals("ordinary-app-content",Diagnostics.tree)
+        assertEquals("menu-save-picture",Diagnostics.menuTree)
+        assertTrue(Diagnostics.textReport().contains("menu-save-picture"))
+    }
+    @Test fun officialCompatibilityPayloadIsPostedAndOwnRegistrationIsObserved() {
+        val c=RuntimeEnvironment.getApplication()
+        Preferences.set(c,"enabled",true)
+        val nm=c.getSystemService(android.app.NotificationManager::class.java)
+        shadowOf(nm).setNotificationsEnabled(true)
+        PortalDisplay.channel(c)
+        val image=Bitmap.createBitmap(16,16,Bitmap.Config.ARGB_8888)
+        MediaSessions.create(c,image,"official-test")
+        shadowOf(Looper.getMainLooper()).idle()
+        PortalDisplay.show(c,officialOnly=true,observationSeconds=30)
+        val finished=java.util.concurrent.CountDownLatch(1)
+        Diagnostics.io.execute { finished.countDown() }
+        assertTrue(finished.await(5,java.util.concurrent.TimeUnit.SECONDS))
+        shadowOf(Looper.getMainLooper()).idle()
+        val notification=nm.activeNotifications.single { it.id==PortalDisplay.NOTIFICATION_ID }.notification
+        val param=org.json.JSONObject(notification.extras.getString("miui.focus.param")!!).getJSONObject("param_v2")
+        assertTrue(param.has("chatInfo"))
+        assertFalse(param.has("iconTextInfo"))
+        assertEquals(30,param.getJSONObject("param_island").getInt("islandTimeout"))
+        shadowOf(Looper.getMainLooper()).idleFor(java.time.Duration.ofMillis(600))
+        assertTrue(PortalDisplay.lastObservation.contains("活跃通知=1"))
+        PortalDisplay.close(c)
+        assertTrue(nm.activeNotifications.none { it.id==PortalDisplay.NOTIFICATION_ID })
+        MediaSessions.cleanup(c,all=true)
+    }
     @Test fun launcherStartsWithoutAccessibilityOrNotificationPermission() {
         val controller = Robolectric.buildActivity(MainActivity::class.java).setup()
         assertNotNull(controller.get().window.decorView)

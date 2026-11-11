@@ -4,6 +4,8 @@ package com.xeno.portal
 object ProbePolicy {
     fun menuCandidate(labels: Set<String>): Boolean =
         labels.contains("分享评论给") && labels.contains("保存到相册")
+    fun shouldInspectEvent(eventPackage: String, foregroundPackage: String, whitelist: Set<String>): Boolean =
+        eventPackage in whitelist || ((eventPackage.isBlank() || eventPackage == "com.android.systemui") && foregroundPackage in whitelist)
     fun automaticSaveAllowed(@Suppress("UNUSED_PARAMETER") labels: Set<String>) = false
     fun validSessionId(id: String) = id.matches(Regex("[a-f0-9]{32}"))
     fun displayRoute(protocol: Int, permission: Boolean?, notifications: Boolean, forceOverlay: Boolean): String = when {

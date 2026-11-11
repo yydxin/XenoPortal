@@ -38,31 +38,31 @@ distributionUrl=https\://services.gradle.org/distributions/gradle-8.13-bin.zip
    MavenCentral dependency, and connects to the library every time, which
    makes it more flexible but also much slower.
 
-/workspace/XenoPortal/app/src/main/java/com/xeno/portal/Diagnostics.kt:95: Warning: Use the KTX extension function SharedPreferences.edit instead? [UseKtx]
+/workspace/XenoPortal/app/src/main/java/com/xeno/portal/Diagnostics.kt:111: Warning: Use the KTX extension function SharedPreferences.edit instead? [UseKtx]
     fun set(c: Context, key: String, value: Boolean) { prefs(c).edit().putBoolean(key, value).apply() }
                                                        ~~~~~~~~~~~~~~~
-/workspace/XenoPortal/app/src/main/java/com/xeno/portal/Diagnostics.kt:98: Warning: Use the KTX extension function SharedPreferences.edit instead? [UseKtx]
+/workspace/XenoPortal/app/src/main/java/com/xeno/portal/Diagnostics.kt:114: Warning: Use the KTX extension function SharedPreferences.edit instead? [UseKtx]
     fun whitelist(c: Context, text: String) { prefs(c).edit().putString("whitelist", text).apply() }
                                               ~~~~~~~~~~~~~~~
-/workspace/XenoPortal/app/src/main/java/com/xeno/portal/Diagnostics.kt:100: Warning: Use the KTX extension function SharedPreferences.edit instead? [UseKtx]
+/workspace/XenoPortal/app/src/main/java/com/xeno/portal/Diagnostics.kt:116: Warning: Use the KTX extension function SharedPreferences.edit instead? [UseKtx]
     fun threshold(c: Context, value: Int) { prefs(c).edit().putInt("threshold", value.coerceIn(250, 500)).apply() }
                                             ~~~~~~~~~~~~~~~
-/workspace/XenoPortal/app/src/main/java/com/xeno/portal/MainActivity.kt:117: Warning: Use the KTX extension function String.toUri instead? [UseKtx]
+/workspace/XenoPortal/app/src/main/java/com/xeno/portal/MainActivity.kt:120: Warning: Use the KTX extension function String.toUri instead? [UseKtx]
                         OutlinedButton(onClick={activity.openSettings(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,Uri.parse("package:${activity.packageName}")))}, Modifier.fillMaxWidth()) { Text("应用信息 / 自启动 / 后台与省电设置") }
                                                                                                                           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 /workspace/XenoPortal/app/src/main/java/com/xeno/portal/MediaSessions.kt:47: Warning: Use the KTX function createBitmap instead? [UseKtx]
                 val bitmap = Bitmap.createBitmap(800, 800, Bitmap.Config.ARGB_8888)
                              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-/workspace/XenoPortal/app/src/main/java/com/xeno/portal/PortalDisplay.kt:54: Warning: Use the KTX extension function String.toUri instead? [UseKtx]
+/workspace/XenoPortal/app/src/main/java/com/xeno/portal/PortalDisplay.kt:64: Warning: Use the KTX extension function String.toUri instead? [UseKtx]
                 val result = c.contentResolver.call(Uri.parse("content://miui.statusbar.notification.public"), "canShowFocus", null, Bundle().apply { putString("package", c.packageName) })
                                                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-/workspace/XenoPortal/app/src/main/java/com/xeno/portal/PortalDisplay.kt:95: Warning: Use the KTX extension function String.toUri instead? [UseKtx]
+/workspace/XenoPortal/app/src/main/java/com/xeno/portal/PortalDisplay.kt:105: Warning: Use the KTX extension function String.toUri instead? [UseKtx]
             data = Uri.parse("xenoportal://session/${session.id}/$target")
                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-/workspace/XenoPortal/app/src/main/java/com/xeno/portal/PortalDisplay.kt:95: Warning: Use the KTX extension function String.toUri instead? [UseKtx]
+/workspace/XenoPortal/app/src/main/java/com/xeno/portal/PortalDisplay.kt:105: Warning: Use the KTX extension function String.toUri instead? [UseKtx]
             data = Uri.parse("xenoportal://session/${session.id}/$target")
                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-/workspace/XenoPortal/app/src/main/java/com/xeno/portal/PortalDisplay.kt:110: Warning: Use the KTX extension function Bitmap.scale instead? [UseKtx]
+/workspace/XenoPortal/app/src/main/java/com/xeno/portal/PortalDisplay.kt:120: Warning: Use the KTX extension function Bitmap.scale instead? [UseKtx]
             android.graphics.Bitmap.createScaledBitmap(bitmap, 224, 224, true).also { if (it !== bitmap) bitmap.recycle() }
             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

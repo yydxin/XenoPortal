@@ -36,7 +36,7 @@ class PortalAccessibilityService : AccessibilityService() {
     override fun onServiceConnected() {
         connection = java.lang.ref.WeakReference(this)
         Diagnostics.stage(0, "成功", "onServiceConnected；全窗口读取/截图能力已声明，未申请触摸探索")
-        Diagnostics.stage(3, "阻断", "诊断版未启用自动长按；开启文字树后仅记录菜单候选，坐标未知，不自动保存")
+        Diagnostics.stage(3, "阻断", "免Root菜单验证：开启窗口采样后自动识别候选；尚无可靠原触点，不自动保存或乱截")
     }
     override fun onInterrupt() { Diagnostics.stage(0, "未知", "onInterrupt：仍需检查连接，不推断进程已停止") }
     override fun onUnbind(intent: android.content.Intent?): Boolean {
@@ -52,69 +52,116 @@ class PortalAccessibilityService : AccessibilityService() {
             Diagnostics.stage(0, "阻断", "无障碍服务已断开")
         }
     }
+    private var lastTargetPackage = ""
+    private var foregroundPackage = ""
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
         if (event == null) return
         val now = SystemClock.elapsedRealtime()
         val pkg = event.packageName?.toString().orEmpty()
-        if (pkg == packageName) return // Avoid diagnostics UI producing a self-event loop.
+        if (event.eventType == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED && pkg.isNotBlank() && pkg != "com.android.systemui") {
+            foregroundPackage = pkg
+        }
+        if (pkg == packageName) return
         val record = now - lastEventLog >= 1200
         if (record) lastEventLog = now
-        Diagnostics.stage(1, "成功", "package=$pkg type=${AccessibilityEvent.eventTypeToString(event.eventType)} window=${event.windowId}", record)
-        if (!Preferences.enabled(this) || pkg == packageName) return
-        val allowed = pkg in Preferences.whitelist(this)
-        Diagnostics.stage(2, if (allowed) "成功" else "跳过", "事件包=$pkg 白名单=$allowed", record)
-        if (!allowed) return
-        // No automatic node actions. Sampling occurs only with explicit debug opt-in.
-        if (Preferences.treeEnabled(this) && now - lastTree >= 1500) {
-            lastTree = now
-            sampleWindows()
+        val type = AccessibilityEvent.eventTypeToString(event.eventType)
+        Diagnostics.stage(1, "成功", "package=$pkg type=$type window=${event.windowId}", record)
+        if (!Preferences.enabled(this)) return
+        val whitelist = Preferences.whitelist(this)
+        val allowed = pkg in whitelist
+        if (allowed) { lastTargetPackage = pkg; if (foregroundPackage.isBlank()) foregroundPackage = pkg }
+        val relatedWindowChange = !allowed && ProbePolicy.shouldInspectEvent(pkg, foregroundPackage, whitelist)
+        Diagnostics.stage(2, if (allowed) "成功" else if (relatedWindowChange) "待核验" else "跳过",
+            "事件包=$pkg 白名单=$allowed；最近目标=$lastTargetPackage 前台线索=$foregroundPackage；关联窗口变化=$relatedWindowChange", record)
+        if ((!allowed && !relatedWindowChange) || !Preferences.treeEnabled(this)) return
+        val critical = event.eventType == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED ||
+            event.eventType == AccessibilityEvent.TYPE_WINDOWS_CHANGED ||
+            event.eventType == AccessibilityEvent.TYPE_VIEW_LONG_CLICKED
+        if (now - lastTree < if (critical) 250 else 1500) return
+        lastTree = now
+        val source = try { event.source } catch (e: Exception) {
+            Diagnostics.log("TREE", "event.source读取失败:${e.javaClass.simpleName}"); null
         }
+        sampleWindows(pkg, event.windowId, source, "event=$type")
     }
-    fun sampleWindows() {
+    fun sampleWindows(
+        eventPackage: String = "", eventWindowId: Int = -1,
+        eventSource: AccessibilityNodeInfo? = null, reason: String = "manual",
+    ) {
         if (!Preferences.enabled(this) || !Preferences.treeEnabled(this)) {
             Diagnostics.log("TREE", "采样被阻止：请先打开总开关和窗口文字树调试")
             return
         }
         try {
-            val output = StringBuilder()
+            val timestamp = android.text.format.DateFormat.format("HH:mm:ss.SSS", System.currentTimeMillis())
+            val output = StringBuilder("captured=$timestamp $reason eventPackage=$eventPackage eventWindow=$eventWindowId\n")
             val labels = mutableSetOf<String>()
             val treeLines = mutableListOf<String>()
+            val visitedWindows = mutableSetOf<Int>()
             var count = 0
-            val all = windows
-            output.appendLine("windows=${all.size}；仅记录白名单窗口；上限1000节点/深度30")
-            for (window in all) {
-                val root = window.root
-                if (root == null) { output.appendLine("window=${window.id} root=null"); continue }
-                val pkg = root.packageName?.toString().orEmpty()
-                if (pkg !in Preferences.whitelist(this)) { output.appendLine("window=${window.id} 非白名单，略过"); continue }
-                val queue = ArrayDeque<Pair<AccessibilityNodeInfo, Int>>()
-                queue.add(root to 0)
-                output.appendLine("window=${window.id} package=$pkg type=${window.type}")
-                while (queue.isNotEmpty() && count < 1000) {
-                    val (node, depth) = queue.removeFirst(); count++
-                    val text = node.text?.toString().orEmpty().take(160)
-                    val desc = node.contentDescription?.toString().orEmpty().take(160)
-                    if (text.isNotBlank()) labels.add(text.trim())
-                    if (desc.isNotBlank()) labels.add(desc.trim())
-                    if (text.isNotBlank() || desc.isNotBlank()) {
-                        val bounds = Rect(); node.getBoundsInScreen(bounds)
-                        val line = "w=${window.id} text=$text desc=$desc id=${node.viewIdResourceName} class=${node.className} click=${node.isClickable} bounds=$bounds"
-                        output.appendLine(line); treeLines.add(line)
+            var eligibleRoots = 0
+            var emptyRoots = 0
+            var skippedRoots = 0
+            var errors = 0
+            val whitelist = Preferences.whitelist(this)
+            fun readRoot(root: AccessibilityNodeInfo?, windowId: Int, route: String) {
+                if (root == null) { emptyRoots++; output.appendLine("route=$route window=$windowId root=null"); return }
+                try {
+                    val pkg = root.packageName?.toString().orEmpty()
+                    if (pkg !in whitelist) {
+                        skippedRoots++; output.appendLine("route=$route window=$windowId package=$pkg 非白名单，不读取文字"); return
                     }
-                    if (depth < 30) for (i in 0 until node.childCount.coerceAtMost(100)) {
-                        if (queue.size < 1000) node.getChild(i)?.let { queue.add(it to depth + 1) }
-                        else output.appendLine("TRUNCATED 子节点队列上限")
+                    if (windowId >= 0 && windowId in visitedWindows) return
+                    if (windowId >= 0) visitedWindows.add(windowId)
+                    eligibleRoots++
+                    val queue = ArrayDeque<Pair<AccessibilityNodeInfo, Int>>()
+                    queue.add(root to 0)
+                    output.appendLine("route=$route window=$windowId package=$pkg")
+                    var truncated = false
+                    while (queue.isNotEmpty() && count < 1000) {
+                        val (node, depth) = queue.removeFirst(); count++
+                        try {
+                            val text = node.text?.toString().orEmpty().take(160)
+                            val desc = node.contentDescription?.toString().orEmpty().take(160)
+                            val cls = node.className?.toString().orEmpty()
+                            if (text.isNotBlank()) labels.add(text.trim())
+                            if (desc.isNotBlank()) labels.add(desc.trim())
+                            val imageLike = listOf("Image", "Picture", "Video", "SurfaceView", "TextureView").any { cls.contains(it, true) }
+                            if (text.isNotBlank() || desc.isNotBlank() || imageLike) {
+                                val bounds = Rect(); node.getBoundsInScreen(bounds)
+                                val line = "w=$windowId text=$text desc=$desc id=${node.viewIdResourceName} class=$cls click=${node.isClickable} bounds=$bounds mediaCandidate=$imageLike"
+                                output.appendLine(line); treeLines.add(line)
+                            }
+                            if (depth < 30) for (i in 0 until node.childCount.coerceAtMost(100)) {
+                                if (queue.size < 1000) node.getChild(i)?.let { queue.add(it to depth + 1) }
+                                else truncated = true
+                            } else if (node.childCount > 0) truncated = true
+                        } catch (e: Exception) { errors++; output.appendLine("NODE_UNAVAILABLE ${e.javaClass.simpleName}") }
                     }
-                }
-                if (queue.isNotEmpty()) output.appendLine("TRUNCATED 节点或深度上限")
-                if (count >= 1000) break
+                    if (truncated || queue.isNotEmpty()) output.appendLine("TRUNCATED 节点/深度/队列达到上限")
+                } catch (e: Exception) { errors++; output.appendLine("ROOT_UNAVAILABLE window=$windowId ${e.javaClass.simpleName}") }
             }
-            output.appendLine("visited=$count；菜单候选不是长按证据")
-            Diagnostics.updateTree(output.toString().take(100000))
-            Diagnostics.batch("TREE", treeLines.take(100) + "本次采样visited=$count；日志最多100节点，完整受限快照见下方/导出")
+            val all = try { windows } catch (e: Exception) {
+                errors++; output.appendLine("WINDOW_LIST_UNAVAILABLE ${e.javaClass.simpleName}"); emptyList()
+            }
+            for (window in all) {
+                try { readRoot(window.root, window.id, "interactive-windows") }
+                catch (e: Exception) { errors++; output.appendLine("WINDOW_UNAVAILABLE id=${window.id} ${e.javaClass.simpleName}") }
+            }
+            if (eligibleRoots == 0) {
+                try { val root = rootInActiveWindow; readRoot(root, root?.windowId ?: -1, "active-root-fallback") }
+                catch (e: Exception) { errors++; output.appendLine("ACTIVE_ROOT_UNAVAILABLE ${e.javaClass.simpleName}") }
+                readRoot(eventSource, eventWindowId, "event-source-fallback")
+            }
+            val summary = "captured=$timestamp windows=${all.size} eligibleRoots=$eligibleRoots emptyRoots=$emptyRoots skippedRoots=$skippedRoots errors=$errors visited=$count reason=$reason"
+            output.appendLine(summary)
+            if (count == 0) output.appendLine("此次无白名单节点；不证明抖音菜单不可见。保留此前成功快照。")
+            Diagnostics.windowScan(summary, output.toString().take(100000), count, ProbePolicy.menuCandidate(labels))
+            Diagnostics.batch("TREE", listOf(summary) + treeLines.take(100) +
+                if (count == 0) listOf(output.toString().take(2200)) else listOf("完整受限快照已保留；菜单候选不等于可靠长按或目标坐标"))
             if (ProbePolicy.menuCandidate(labels) && SystemClock.elapsedRealtime() - lastCandidate > 2000) {
                 lastCandidate = SystemClock.elapsedRealtime()
-                Diagnostics.stage(3, "待验证", "菜单候选：分享评论给 + 保存到相册；来源未确认，坐标未知，未点击保存")
+                Diagnostics.stage(3, "待验证", "命中菜单候选：分享评论给 + 保存到相册；原触点未知，尚未自动截图/点击保存，需与普通分享面板对照")
             }
         } catch (e: Exception) { Diagnostics.exception(3, "遍历全窗口", e) }
     }

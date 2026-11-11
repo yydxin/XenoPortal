@@ -16,9 +16,10 @@ class ShareActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         val id = intent.getStringExtra("session").orEmpty()
         val selected = intent.getStringExtra("target")
+        val source = intent.getStringExtra("source") ?: "unknown"
         val session = MediaSessions.find(this, id)
         PortalDisplay.close(this)
-        Diagnostics.stage(6, if (session == null) "阻断" else "成功", "Activity 回调 session=$id target=$selected；${if (session == null) "文件过期/不存在" else "会话有效"}")
+        Diagnostics.stage(6, if (session == null) "阻断" else "成功", "Activity 回调 source=$source session=$id target=$selected；${if (session == null) "文件过期/不存在" else "会话有效"}")
         setContent {
             PortalTheme {
                 var busy by remember { mutableStateOf(false) }

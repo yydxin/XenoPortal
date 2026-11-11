@@ -39,6 +39,10 @@ object Diagnostics {
         private set
     var tree by mutableStateOf("尚未采样；调试文字树默认关闭")
         private set
+    var menuTree by mutableStateOf("尚未捕获菜单候选快照")
+        private set
+    var treeAttempt by mutableStateOf("尚未尝试窗口采样")
+        private set
     private fun time() = SimpleDateFormat("HH:mm:ss.SSS", Locale.ROOT).format(Date())
     fun init(context: Context) {
         journal = File(context.filesDir, "diagnostics.txt")
@@ -71,9 +75,21 @@ object Diagnostics {
     fun exception(index: Int, operation: String, error: Throwable) =
         stage(index, "失败", "$operation ${error.javaClass.simpleName}: ${error.message}")
     fun updateTree(value: String) { main.post { tree = value } }
+    fun windowScan(attempt: String, snapshot: String, visited: Int, menuCandidate: Boolean = false) {
+        main.post {
+            treeAttempt = attempt
+            if (visited > 0) tree = snapshot
+            if (menuCandidate) menuTree = snapshot
+        }
+    }
+    fun textReport(): String = stages.entries.joinToString("\n") { "S${it.key} ${it.value}" } +
+        "\n\n" + lines.joinToString("\n") +
+        "\n\n最近窗口采样尝试\n" + treeAttempt +
+        "\n\n最近成功读取的白名单窗口快照（以快照时间为准）\n" + tree +
+        "\n\n最近菜单候选快照（不能证明长按来源）\n" + menuTree
     fun clear() {
         main.post {
-            lines = emptyList(); tree = "已清除窗口树"; stages = (0..7).associateWith { Stage() }
+            lines = emptyList(); tree = "已清除窗口树"; treeAttempt = "已清除采样结果"; menuTree = "已清除菜单候选快照"; stages = (0..7).associateWith { Stage() }
             io.execute { runCatching { journal.writeText("") } }
         }
     }
@@ -81,8 +97,8 @@ object Diagnostics {
         val dir = File(context.cacheDir, "diagnostics").apply { mkdirs() }
         dir.listFiles()?.forEach { it.delete() }
         return File(dir, "xeno-diagnostics.txt").apply {
-            writeText("XenoPortal 2.0.0-probe.1\n${android.os.Build.MANUFACTURER} ${android.os.Build.MODEL}\n${android.os.Build.DISPLAY} API ${android.os.Build.VERSION.SDK_INT}\n\n" +
-                stages.entries.joinToString("\n") { "S${it.key} ${it.value}" } + "\n\n" + lines.joinToString("\n") + "\n\n最近窗口快照（如已开启采样）\n" + tree)
+            writeText("XenoPortal 2.0.1-probe.2\n${android.os.Build.MANUFACTURER} ${android.os.Build.MODEL}\n${android.os.Build.DISPLAY} API ${android.os.Build.VERSION.SDK_INT}\n\n" +
+                textReport())
         }
     }
 }
