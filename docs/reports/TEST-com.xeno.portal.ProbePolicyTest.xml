@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.xeno.portal.ProbePolicyTest" tests="3" skipped="0" failures="0" errors="0" timestamp="2026-11-10T12:14:49.312Z" hostname="0754e02a79b9" time="0.076">
+  <properties/>
+  <testcase name="sessionIdRejectsPathTraversal" classname="com.xeno.portal.ProbePolicyTest" time="0.049"/>
+  <testcase name="ordinaryShareAndMenuNeverAuthorizeSave" classname="com.xeno.portal.ProbePolicyTest" time="0.024"/>
+  <testcase name="unknownPermissionFallsBackEvenOnNewProtocol" classname="com.xeno.portal.ProbePolicyTest" time="0.001"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

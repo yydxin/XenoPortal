@@ -1,0 +1,23 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+    <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
+    <uses-permission android:name="android.permission.READ_MEDIA_VISUAL_USER_SELECTED" />
+    <queries>
+        <package android:name="com.tencent.mm"/><package android:name="com.tencent.mobileqq"/>
+        <package android:name="com.miui.mishare.connectivity"/><package android:name="com.openai.chatgpt"/>
+        <package android:name="com.anthropic.claude"/><package android:name="com.larus.nova"/>
+        <package android:name="com.deepseek.chat"/>
+        <intent><action android:name="android.intent.action.SEND"/><data android:mimeType="image/*"/></intent>
+        <intent><action android:name="android.intent.action.SEND"/><data android:mimeType="video/*"/></intent>
+    </queries>
+    <application android:name=".PortalApp" android:label="@string/app_name" android:icon="@drawable/ic_portal" android:allowBackup="false" android:dataExtractionRules="@xml/data_extraction_rules" android:supportsRtl="true" android:theme="@style/AppTheme">
+        <activity android:name=".MainActivity" android:exported="true"><intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent-filter></activity>
+        <activity android:name=".ShareActivity" android:exported="false"/>
+        <service android:name=".PortalAccessibilityService" android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE" android:exported="true">
+            <intent-filter><action android:name="android.accessibilityservice.AccessibilityService"/></intent-filter>
+            <meta-data android:name="android.accessibilityservice" android:resource="@xml/accessibility_service"/>
+        </service>
+        <provider android:name="androidx.core.content.FileProvider" android:authorities="${applicationId}.files" android:exported="false" android:grantUriPermissions="true"><meta-data android:name="android.support.FILE_PROVIDER_PATHS" android:resource="@xml/file_paths"/></provider>
+    </application>
+</manifest>

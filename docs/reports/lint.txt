@@ -1,0 +1,125 @@
+/workspace/XenoPortal/gradle/wrapper/gradle-wrapper.properties:3: Warning: A newer version of Gradle than 8.13 is available: 8.14.6 [AndroidGradlePluginVersion]
+distributionUrl=https\://services.gradle.org/distributions/gradle-8.13-bin.zip
+                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+   Explanation for issues of type "AndroidGradlePluginVersion":
+   This detector looks for usage of the Android Gradle Plugin where the
+   version you are using is not the current stable release. Using older
+   versions is fine, and there are cases where you deliberately want to stick
+   with an older version. However, you may simply not be aware that a more
+   recent version is available, and that is what this lint check helps find.
+
+/workspace/XenoPortal/app/build.gradle.kts:32: Warning: A newer version of androidx.compose:compose-bom than 2025.10.01 is available: 2026.09.00 [GradleDependency]
+    implementation(platform("androidx.compose:compose-bom:2025.10.01"))
+                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/workspace/XenoPortal/app/build.gradle.kts:33: Warning: A newer version of androidx.activity:activity-compose than 1.11.0 is available: 1.13.0 [GradleDependency]
+    implementation("androidx.activity:activity-compose:1.11.0")
+                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/workspace/XenoPortal/app/build.gradle.kts:37: Warning: A newer version of androidx.core:core-ktx than 1.17.0 is available: 1.19.1 [GradleDependency]
+    implementation("androidx.core:core-ktx:1.17.0")
+                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+   Explanation for issues of type "GradleDependency":
+   This detector looks for usages of libraries where the version you are using
+   is not the current stable release. Using older versions is fine, and there
+   are cases where you deliberately want to stick with an older version.
+   However, you may simply not be aware that a more recent version is
+   available, and that is what this lint check helps find.
+
+/workspace/XenoPortal/app/build.gradle.kts:39: Warning: A newer version of org.robolectric:robolectric than 4.16.1 is available: 4.17 [NewerVersionAvailable]
+    testImplementation("org.robolectric:robolectric:4.16.1")
+                       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+   Explanation for issues of type "NewerVersionAvailable":
+   This detector checks with a central repository to see if there are newer
+   versions available for the dependencies used by this project. This is
+   similar to the GradleDependency check, which checks for newer versions
+   available in the Android SDK tools and libraries, but this works with any
+   MavenCentral dependency, and connects to the library every time, which
+   makes it more flexible but also much slower.
+
+/workspace/XenoPortal/app/src/main/java/com/xeno/portal/Diagnostics.kt:95: Warning: Use the KTX extension function SharedPreferences.edit instead? [UseKtx]
+    fun set(c: Context, key: String, value: Boolean) { prefs(c).edit().putBoolean(key, value).apply() }
+                                                       ~~~~~~~~~~~~~~~
+/workspace/XenoPortal/app/src/main/java/com/xeno/portal/Diagnostics.kt:98: Warning: Use the KTX extension function SharedPreferences.edit instead? [UseKtx]
+    fun whitelist(c: Context, text: String) { prefs(c).edit().putString("whitelist", text).apply() }
+                                              ~~~~~~~~~~~~~~~
+/workspace/XenoPortal/app/src/main/java/com/xeno/portal/Diagnostics.kt:100: Warning: Use the KTX extension function SharedPreferences.edit instead? [UseKtx]
+    fun threshold(c: Context, value: Int) { prefs(c).edit().putInt("threshold", value.coerceIn(250, 500)).apply() }
+                                            ~~~~~~~~~~~~~~~
+/workspace/XenoPortal/app/src/main/java/com/xeno/portal/MainActivity.kt:117: Warning: Use the KTX extension function String.toUri instead? [UseKtx]
+                        OutlinedButton(onClick={activity.openSettings(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,Uri.parse("package:${activity.packageName}")))}, Modifier.fillMaxWidth()) { Text("应用信息 / 自启动 / 后台与省电设置") }
+                                                                                                                          ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/workspace/XenoPortal/app/src/main/java/com/xeno/portal/MediaSessions.kt:47: Warning: Use the KTX function createBitmap instead? [UseKtx]
+                val bitmap = Bitmap.createBitmap(800, 800, Bitmap.Config.ARGB_8888)
+                             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/workspace/XenoPortal/app/src/main/java/com/xeno/portal/PortalDisplay.kt:54: Warning: Use the KTX extension function String.toUri instead? [UseKtx]
+                val result = c.contentResolver.call(Uri.parse("content://miui.statusbar.notification.public"), "canShowFocus", null, Bundle().apply { putString("package", c.packageName) })
+                                                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/workspace/XenoPortal/app/src/main/java/com/xeno/portal/PortalDisplay.kt:95: Warning: Use the KTX extension function String.toUri instead? [UseKtx]
+            data = Uri.parse("xenoportal://session/${session.id}/$target")
+                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/workspace/XenoPortal/app/src/main/java/com/xeno/portal/PortalDisplay.kt:95: Warning: Use the KTX extension function String.toUri instead? [UseKtx]
+            data = Uri.parse("xenoportal://session/${session.id}/$target")
+                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/workspace/XenoPortal/app/src/main/java/com/xeno/portal/PortalDisplay.kt:110: Warning: Use the KTX extension function Bitmap.scale instead? [UseKtx]
+            android.graphics.Bitmap.createScaledBitmap(bitmap, 224, 224, true).also { if (it !== bitmap) bitmap.recycle() }
+            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+   Explanation for issues of type "UseKtx":
+   The Android KTX libraries decorates the Android platform SDK as well as
+   various libraries with more convenient extension functions available from
+   Kotlin, allowing you to use default parameters, named parameters, and
+   more.
+
+   Available options:
+
+   **remove-defaults** (default is true):
+   Whether to skip arguments that match the defaults provided by the extension.
+
+   Extensions often provide default values for some of the parameters. For example:
+   ```kotlin
+   fun Path.readLines(charset: Charset = Charsets.UTF_8): List<String> { return Files.readAllLines(this, charset) }
+   ```
+   This lint check will by default automatically omit parameters that match the default, so if your code was calling
+
+   ```kotlin
+   Files.readAllLines(file, Charset.UTF_8)
+   ```
+   lint would replace this with
+   ```kotlin
+   file.readLines()
+   ```
+   rather than
+
+   ```kotlin
+   file.readLines(Charset.UTF_8
+   ```
+   You can turn this behavior off using this option.
+
+   To configure this option, use a `lint.xml` file with an <option> like this:
+
+   ```xml
+   <lint>
+       <issue id="UseKtx">
+           <option name="remove-defaults" value="true" />
+       </issue>
+   </lint>
+   ```
+
+   **require-present** (default is true):
+   Whether to only offer extensions already available.
+
+   This option lets you only have lint suggest extension replacements if those extensions are already available on the class path (in other words, you're already depending on the library containing the extension method.)
+
+   To configure this option, use a `lint.xml` file with an <option> like this:
+
+   ```xml
+   <lint>
+       <issue id="UseKtx">
+           <option name="require-present" value="true" />
+       </issue>
+   </lint>
+   ```
+
+0 errors, 14 warnings

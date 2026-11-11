@@ -1,0 +1,17 @@
+Verifies
+Verified using v1 scheme (JAR signing): false
+Verified using v2 scheme (APK Signature Scheme v2): true
+Verified using v3 scheme (APK Signature Scheme v3): false
+Verified using v3.1 scheme (APK Signature Scheme v3.1): false
+Verified using v4 scheme (APK Signature Scheme v4): false
+Verified for SourceStamp: false
+Number of signers: 1
+Signer #1 certificate DN: CN=XenoPortal Diagnostic Build
+Signer #1 certificate SHA-256 digest: 3553c1cf383405b309d7fe94147f8f4bc8fb99799c48e67adeacbb9f94b4fa65
+Signer #1 certificate SHA-1 digest: 561df801b48ae10e5adae5824c7cfa1ff5ecb5f3
+Signer #1 certificate MD5 digest: 5df17c060fa617e7e63a31e84c242833
+Signer #1 key algorithm: RSA
+Signer #1 key size (bits): 3072
+Signer #1 public key SHA-256 digest: c2458e40ae543632fd62f55ea08f34740e28fe423cce192f3d022ff7b7f91301
+Signer #1 public key SHA-1 digest: 5097a2a9efe56d9851004ec6246ff36102a23f7d
+Signer #1 public key MD5 digest: c8d19c6f1a68a5750e91ab94c268def7
