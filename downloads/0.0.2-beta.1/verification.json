@@ -1,0 +1,32 @@
+{
+  "version": "0.0.2-beta.1",
+  "versionCode": 206,
+  "tests": 39,
+  "lint_errors": 0,
+  "lint_warnings": 25,
+  "same_signing_certificate": true,
+  "root_experimental": true,
+  "root_device_verified": false,
+  "files": [
+    {
+      "name": "INSTALL.zh-CN.txt",
+      "bytes": 3130,
+      "sha256": "a559643549b3cf5de6e42f601360e88877112b47d18f3e31d1c86db217cdd5de"
+    },
+    {
+      "name": "XenoPortal-0.0.2-beta.1-APK.zip",
+      "bytes": 7258547,
+      "sha256": "673683e00afcf19a638cd05e61ee9cb799d864a53171f49ae2194bfde7364c8e"
+    },
+    {
+      "name": "XenoPortal-0.0.2-beta.1-release.apk",
+      "bytes": 21130599,
+      "sha256": "7e960f6c6815dcf1d9f0b6b772bd7f3bff7e76fca671a49eff82ca9c869b03cb"
+    },
+    {
+      "name": "XenoPortal-0.0.2-beta.1-source.zip",
+      "bytes": 179031,
+      "sha256": "d55fa29ef640a431346f663038905b49133c66d96e0f931a1086c1a445b53deb"
+    }
+  ]
+}

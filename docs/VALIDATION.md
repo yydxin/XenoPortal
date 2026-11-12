@@ -25,3 +25,6 @@ ScreenshotResult.timestamp在AOSP是结果返回时序，不是精确像素帧�
 此前用户确认probe.3在其手机可显示系统岛；不能当作新Root路线全链路验收。当前无连接的真实Root测试设备。
 
 证据：reports/build.txt、TEST-*.xml、lint.txt、apk-signature.txt、apk-badging.txt、module-packaging.txt。文件大小与SHA-256见交付清单。
+
+
+在线CI已通过：[GitHub Actions](https://github.com/yydxin/XenoPortal/actions/runs/43240986598)，验证提交 `4ad75c0905c8feee67405a599b8557af437f5f6d`，Debug构建、测试和Lint成功。该提交与交付版应用源码一致，后续仅添加发布文件和验证记录。
