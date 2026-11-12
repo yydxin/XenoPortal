@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.xeno.portal.root.HoldGestureTest" tests="10" skipped="0" failures="0" errors="0" timestamp="2026-11-12T14:46:01.956Z" hostname="f4aded875f45" time="0.003">
+  <properties/>
+  <testcase name="newDownStartsItsOwnDeadlineAndCoordinates" classname="com.xeno.portal.root.HoldGestureTest" time="0.001"/>
+  <testcase name="secondPointerCancelsAndDoesNotRestartWhenItLeaves" classname="com.xeno.portal.root.HoldGestureTest" time="0.0"/>
+  <testcase name="quickTapNeverProducesHold" classname="com.xeno.portal.root.HoldGestureTest" time="0.0"/>
+  <testcase name="movementOutsideSlopCannotBeUndoneByReturningToOrigin" classname="com.xeno.portal.root.HoldGestureTest" time="0.0"/>
+  <testcase name="shortTimerDelayIsAllowedButStaleTimerIsRejected" classname="com.xeno.portal.root.HoldGestureTest" time="0.0"/>
+  <testcase name="slopUsesEuclideanDistanceAndAllowsItsBoundary" classname="com.xeno.portal.root.HoldGestureTest" time="0.0"/>
+  <testcase name="stationaryFingerFiresAtThresholdExactlyOnce" classname="com.xeno.portal.root.HoldGestureTest" time="0.0"/>
+  <testcase name="cancelAndNewDownDiscardOldTimerState" classname="com.xeno.portal.root.HoldGestureTest" time="0.0"/>
+  <testcase name="movementAfterEmissionStillCancelsAnUnsentRequest" classname="com.xeno.portal.root.HoldGestureTest" time="0.0"/>
+  <testcase name="invalidCoordinatesAndClockReversalFailClosed" classname="com.xeno.portal.root.HoldGestureTest" time="0.001"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

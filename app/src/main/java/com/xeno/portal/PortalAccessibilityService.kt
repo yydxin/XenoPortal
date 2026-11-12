@@ -38,7 +38,7 @@ class PortalAccessibilityService : AccessibilityService() {
     override fun onServiceConnected() {
         connection = java.lang.ref.WeakReference(this)
         Diagnostics.stage(0, "成功", "onServiceConnected；全窗口读取/截图能力已声明，未申请触摸探索")
-        Diagnostics.stage(3, "阻断", "免Root菜单验证：开启窗口采样后自动识别候选；尚无可靠原触点，不自动保存或乱截")
+        Diagnostics.stage(3, "等待", if(Preferences.rootEnabled(this)) "Root 触发开关已开启，等待抖音模块上报真实触点；S0 连接不等于模块连接" else "Root 触发关闭；免 Root 使用手动选图，菜单采样不自动截图")
     }
     override fun onInterrupt() { Diagnostics.stage(0, "未知", "onInterrupt：仍需检查连接，不推断进程已停止") }
     override fun onUnbind(intent: android.content.Intent?): Boolean {

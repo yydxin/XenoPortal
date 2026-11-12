@@ -1,27 +1,27 @@
-# 0.0.1-beta.1 验证记录
+# 0.0.2-beta.1 验证记录
 
-手动选图beta，versionCode205，com.xeno.portal，minSdk33 / targetSdk36。同原独立诊断签名，可覆盖安装。
+Root / LSPosed R1实验版，versionCode206，com.xeno.portal，minSdk33 / targetSdk36。同原独立签名，可覆盖旧beta与诊断版。
 
 ## 已编译验证
 
-Release/Debug、23项本地测试通过，无跳过；Lint 0错误、22项警告。APK签名复核通过，证书与前版一致。文件大小与SHA-256见交付SHA256SUMS和verification.json。
+Release/Debug构建、39项本地测试通过，无跳过；Lint 0错误、25项警告。APK签名与前版证书一致。ZIP/APK CRC、包名/版本、xposed_init入口和DEX中的Hook类已核验；Xposed API只用于编译，未打包框架实现。
 
-新增本地原生图形测试：系统照片选择URI导入生成最长边2048像素的私有JPEG；没有完整图片读取权限时可通过提供的单张流处理；网络URI和超过25MiB的输入不会替换当前会话。此测试不替代真实系统照片选择器授权验收。
+新增检查：单指时长/滑动/多指/取消/重复/过期规则；桥接拒绝未知或共享UID、无效坐标/时间，开关即时门控和重复保护；唯一评论目标、菜单/不完整树/无效矩形拒绝、显示器/旋转/放大一致性。沿用照片导入、手动裁图、后台保存、分享缓存、官方通知与启动回归测试。
 
-既有检查保留：实际裁图像素/尺寸、越界与不可见节点拒绝、表情菜单与无效普通分享对照、后台保存不启动Activity及重复/失败回滚、API36通知提升请求和保存广播、启动无障碍未连接时页面可用。
+Lint的ExportedContentProvider警告经逻辑审查：Root桥接需跨UID调用，代码对call逐次校验独占抖音UID，所有数据/文件方法不提供读取；只开放空握手路径授权以建立包可见性。其余警告主要是依赖更新、KTX建议及已有中文硬编码。测试不能替代真机IPC和框架安全边界核验。
 
 ## 已逻辑自查但未真机验证
 
-四页主界面、照片选择、手动评论裁图、直接保存、全部分享目标与官方系统岛入口。实际图片通知显示待分享，合成图保留验证文案。取消、超时、缓存租期、缺权限与服务断开都有诊断记录。
+同APK模块元数据、仅抖音主进程窗口触摸Hook、异步IPC不等待宿主UI、限定触点的A11y裁图、图片缓存后官方通知、Root开关默认关闭、时效/取消/断开处理。没有注入系统框架或SystemUI，没有全局焦点鉴权绕过，没有自绘岛降级。
 
-仓库同步README、安装、架构、测试清单、签名说明、版本记录；历史研究/下载保留。CI配置不含发布密钥；打包时尚未确认线上结果；随后GitHub构建、测试和Lint全部通过，见[CI运行](https://github.com/yydxin/XenoPortal/actions/runs/43012285324)及reports/ci-0.0.1-beta.1.json。发布归档保留打包时快照，归档后本次仅补充验证记录，应用源码与已通过CI的提交一致。
+仓库更新Root/无Root研究、README、安装、架构、测试清单和版本说明。GitHub CI以实际在线结果为准，旧beta成功记录不能用于新版本。
 
 ## 必须真机验证
 
-系统照片选择器与单张授权、评论节点父子关系/活动窗口/硬件截图尺寸、选图裁图是否未压暗、系统岛实际形态、本beta直接保存和微信/QQ接收完整流程。
+LSPosed在目标HyperOS的注入与实际callback类；URI授权后宿主是否能解析Provider；抖音评论图片/表情节点祖先关系及坐标；截图是否未压暗；新beta官方岛、直接保存与微信/QQ接收；快速点按/滚动/普通分享不误触发及原手势不受影响。
 
-用户此前确认probe.3可在其HyperOS手机桌面显示系统岛；不等于本beta已全链路通过，也不能推广到所有ROM。评论图片与添加表情菜单已有真实节点证据，普通分享真实对照仍不足。
+ScreenshotResult.timestamp在AOSP是结果返回时序，不是精确像素帧时间。350ms判定+节点查询/截图不能保证菜单前成像；650ms是本实现的消息时效预算，不是抖音菜单出现时间。原视频/GIF、任意Activity独立弹窗/多屏、系统进程全局监听与SystemUI定向放行仍未实现。
 
-自动长按触点、目标关联、菜单前截图、原视频/GIF提取和官方拖拽分享仍未完成/启用。本版明确为手动选图beta。
+此前用户确认probe.3在其手机可显示系统岛；不能当作新Root路线全链路验收。当前无连接的真实Root测试设备。
 
-证据：reports/build.txt、reports/TEST-*.xml、reports/lint.txt、reports/apk-signature.txt。
+证据：reports/build.txt、TEST-*.xml、lint.txt、apk-signature.txt、apk-badging.txt、module-packaging.txt。文件大小与SHA-256见交付清单。

@@ -9,13 +9,13 @@ distributionUrl=https\://services.gradle.org/distributions/gradle-8.13-bin.zip
    with an older version. However, you may simply not be aware that a more
    recent version is available, and that is what this lint check helps find.
 
-/workspace/XenoPortal/app/build.gradle.kts:32: Warning: A newer version of androidx.compose:compose-bom than 2025.10.01 is available: 2026.09.00 [GradleDependency]
+/workspace/XenoPortal/app/build.gradle.kts:33: Warning: A newer version of androidx.compose:compose-bom than 2025.10.01 is available: 2026.09.00 [GradleDependency]
     implementation(platform("androidx.compose:compose-bom:2025.10.01"))
                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-/workspace/XenoPortal/app/build.gradle.kts:33: Warning: A newer version of androidx.activity:activity-compose than 1.11.0 is available: 1.13.0 [GradleDependency]
+/workspace/XenoPortal/app/build.gradle.kts:34: Warning: A newer version of androidx.activity:activity-compose than 1.11.0 is available: 1.13.0 [GradleDependency]
     implementation("androidx.activity:activity-compose:1.11.0")
                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-/workspace/XenoPortal/app/build.gradle.kts:37: Warning: A newer version of androidx.core:core-ktx than 1.17.0 is available: 1.19.1 [GradleDependency]
+/workspace/XenoPortal/app/build.gradle.kts:38: Warning: A newer version of androidx.core:core-ktx than 1.17.0 is available: 1.19.1 [GradleDependency]
     implementation("androidx.core:core-ktx:1.17.0")
                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -26,7 +26,7 @@ distributionUrl=https\://services.gradle.org/distributions/gradle-8.13-bin.zip
    However, you may simply not be aware that a more recent version is
    available, and that is what this lint check helps find.
 
-/workspace/XenoPortal/app/build.gradle.kts:39: Warning: A newer version of org.robolectric:robolectric than 4.16.1 is available: 4.17 [NewerVersionAvailable]
+/workspace/XenoPortal/app/build.gradle.kts:40: Warning: A newer version of org.robolectric:robolectric than 4.16.1 is available: 4.17 [NewerVersionAvailable]
     testImplementation("org.robolectric:robolectric:4.16.1")
                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -38,22 +38,38 @@ distributionUrl=https\://services.gradle.org/distributions/gradle-8.13-bin.zip
    MavenCentral dependency, and connects to the library every time, which
    makes it more flexible but also much slower.
 
+/workspace/XenoPortal/app/src/main/AndroidManifest.xml:21: Warning: Exported content providers can provide access to potentially sensitive data [ExportedContentProvider]
+        <provider android:name=".RootBridgeProvider" android:authorities="${applicationId}.rootbridge" android:exported="true" android:grantUriPermissions="false">
+         ~~~~~~~~
+
+   Explanation for issues of type "ExportedContentProvider":
+   Content providers are exported by default and any application on the system
+   can potentially use them to read and write data. If the content provider
+   provides access to sensitive data, it should be protected by specifying
+   export=false in the manifest or by protecting it with a permission that can
+   be granted to other applications.
+
+   https://goo.gle/ExportedContentProvider
+
 /workspace/XenoPortal/app/src/main/java/com/xeno/portal/AlbumSaveReceiver.kt:52: Warning: Use the KTX extension function String.toUri instead? [UseKtx]
                 data=Uri.parse("xenoportal://album/${session.id}")
                      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 /workspace/XenoPortal/app/src/main/java/com/xeno/portal/AlbumSaveReceiver.kt:52: Warning: Use the KTX extension function String.toUri instead? [UseKtx]
                 data=Uri.parse("xenoportal://album/${session.id}")
                      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-/workspace/XenoPortal/app/src/main/java/com/xeno/portal/Diagnostics.kt:120: Warning: Use the KTX extension function SharedPreferences.edit instead? [UseKtx]
+/workspace/XenoPortal/app/src/main/java/com/xeno/portal/Diagnostics.kt:121: Warning: Use the KTX extension function SharedPreferences.edit instead? [UseKtx]
     fun set(c: Context, key: String, value: Boolean) { prefs(c).edit().putBoolean(key, value).apply() }
                                                        ~~~~~~~~~~~~~~~
-/workspace/XenoPortal/app/src/main/java/com/xeno/portal/Diagnostics.kt:123: Warning: Use the KTX extension function SharedPreferences.edit instead? [UseKtx]
+/workspace/XenoPortal/app/src/main/java/com/xeno/portal/Diagnostics.kt:124: Warning: Use the KTX extension function SharedPreferences.edit instead? [UseKtx]
     fun whitelist(c: Context, text: String) { prefs(c).edit().putString("whitelist", text).apply() }
                                               ~~~~~~~~~~~~~~~
-/workspace/XenoPortal/app/src/main/java/com/xeno/portal/Diagnostics.kt:125: Warning: Use the KTX extension function SharedPreferences.edit instead? [UseKtx]
+/workspace/XenoPortal/app/src/main/java/com/xeno/portal/Diagnostics.kt:126: Warning: Use the KTX extension function SharedPreferences.edit instead? [UseKtx]
     fun threshold(c: Context, value: Int) { prefs(c).edit().putInt("threshold", value.coerceIn(250, 500)).apply() }
                                             ~~~~~~~~~~~~~~~
-/workspace/XenoPortal/app/src/main/java/com/xeno/portal/MainActivity.kt:155: Warning: Use the KTX extension function String.toUri instead? [UseKtx]
+/workspace/XenoPortal/app/src/main/java/com/xeno/portal/root/DouyinTouchHook.kt:38: Warning: Use the KTX extension function String.toUri instead? [UseKtx]
+    private val bridgeUri by lazy { Uri.parse("content://com.xeno.portal.rootbridge") }
+                                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/workspace/XenoPortal/app/src/main/java/com/xeno/portal/MainActivity.kt:170: Warning: Use the KTX extension function String.toUri instead? [UseKtx]
                         OutlinedButton(onClick={activity.openSettings(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,Uri.parse("package:${activity.packageName}")))}, Modifier.fillMaxWidth()) { Text("应用信息 / 自启动 / 后台与省电设置") }
                                                                                                                           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 /workspace/XenoPortal/app/src/main/java/com/xeno/portal/MediaSessions.kt:50: Warning: Use the KTX function createBitmap instead? [UseKtx]
@@ -65,18 +81,21 @@ distributionUrl=https\://services.gradle.org/distributions/gradle-8.13-bin.zip
 /workspace/XenoPortal/app/src/main/java/com/xeno/portal/NativeLiveUpdates.kt:59: Warning: Use the KTX extension function String.toUri instead? [UseKtx]
                 data=Uri.parse("xenoportal://native/${session.id}/$target")
                      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-/workspace/XenoPortal/app/src/main/java/com/xeno/portal/PortalDisplay.kt:64: Warning: Use the KTX extension function String.toUri instead? [UseKtx]
+/workspace/XenoPortal/app/src/main/java/com/xeno/portal/PortalDisplay.kt:54: Warning: Use the KTX extension function String.toUri instead? [UseKtx]
                 val result = c.contentResolver.call(Uri.parse("content://miui.statusbar.notification.public"), "canShowFocus", null, Bundle().apply { putString("package", c.packageName) })
                                                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-/workspace/XenoPortal/app/src/main/java/com/xeno/portal/PortalDisplay.kt:106: Warning: Use the KTX extension function String.toUri instead? [UseKtx]
+/workspace/XenoPortal/app/src/main/java/com/xeno/portal/PortalDisplay.kt:95: Warning: Use the KTX extension function String.toUri instead? [UseKtx]
             data = Uri.parse("xenoportal://session/${session.id}/$target")
                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-/workspace/XenoPortal/app/src/main/java/com/xeno/portal/PortalDisplay.kt:106: Warning: Use the KTX extension function String.toUri instead? [UseKtx]
+/workspace/XenoPortal/app/src/main/java/com/xeno/portal/PortalDisplay.kt:95: Warning: Use the KTX extension function String.toUri instead? [UseKtx]
             data = Uri.parse("xenoportal://session/${session.id}/$target")
                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-/workspace/XenoPortal/app/src/main/java/com/xeno/portal/PortalDisplay.kt:125: Warning: Use the KTX extension function Bitmap.scale instead? [UseKtx]
+/workspace/XenoPortal/app/src/main/java/com/xeno/portal/PortalDisplay.kt:114: Warning: Use the KTX extension function Bitmap.scale instead? [UseKtx]
             android.graphics.Bitmap.createScaledBitmap(bitmap, 224, 224, true).also { if (it !== bitmap) bitmap.recycle() }
             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/workspace/XenoPortal/app/src/main/java/com/xeno/portal/RootBridgeProvider.kt:49: Warning: Use the KTX extension function String.toUri instead? [UseKtx]
+    private val handshake=Uri.parse("content://com.xeno.portal.rootbridge/handshake")
+                          ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
    Explanation for issues of type "UseKtx":
    The Android KTX libraries decorates the Android platform SDK as well as
@@ -160,4 +179,4 @@ distributionUrl=https\://services.gradle.org/distributions/gradle-8.13-bin.zip
 
    https://developer.android.com/guide/topics/resources/localization.html
 
-0 errors, 22 warnings
+0 errors, 25 warnings

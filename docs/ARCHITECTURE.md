@@ -1,22 +1,25 @@
-# 0.0.1-beta.1 架构与边界
+# 0.0.2-beta.1 架构
 
-com.xeno.portal，minSdk33，target/compileSdk36，Kotlin/Compose。无网络、悬浮窗或前台服务权限；无Root/Shizuku/触摸探索。
+com.xeno.portal，minSdk33，target/compileSdk36，Kotlin/Compose；同APK兼作legacy Xposed模块，API82仅compileOnly，不打包框架实现。
 
-| 模块 | 职责 |
-|---|---|
-| MainActivity | 首页取图/保存/分享、设置、诊断、独立开发工具 |
-| PhotoImport | 系统照片选择URI，最多25MiB读取，软件解码至最长边2048，JPEG静态帧缓存 |
-| PortalAccessibilityService | 服务状态、全窗口有界读取、限频与补采样、用户主动截图；不点击第三方节点 |
-| CommentImagePicker | 已知评论上下文与可见图片候选，前后位置/旋转/尺寸检查，先截图后手动选择 |
-| NativeLiveUpdates | Android16公开提升请求，查询权限和系统返回标志，单通知更新/30秒取消 |
-| PortalDisplay | 历史小米焦点协议探针、可选自绘测试、统一取消 |
-| AlbumSaveReceiver | 非导出不可变PendingIntent，用户点击后直接保存，不启动Activity |
-| MediaSessions | 私有JPEG会话、分享租期、保存并发保护、MediaStore pending写入及失败清理 |
-| Sharing / ShareActivity | 固定目标、查询安装、包限定ACTION_SEND、FileProvider授权与系统面板降级 |
-| Diagnostics / DouyinMenuTrials | 最近200行日志、S0～S7、全受限窗口树、三组独立证据、导出与大报告摘要 |
+## Root R1
 
-照片导入不依赖无障碍；评论截图依赖服务和抖音真实节点。两条路径都由用户主动操作，当前不实现自动长按。临时选图窗口只是选择界面，不冒充官方岛。系统是否提升、HyperOS是否显示、接收方是否成功接收，分别记录并以真机为准。
+抖音主进程 → 真实Window.Callback实现的dispatchTouchEvent只读Hook → 单指稳定长按 → 后台线程ContentResolver.call → RootBridgeProvider校验与异步排队 → 无障碍查评论节点/截图 → 唯一触点裁图 → NativeLiveUpdates官方岛 → 用户保存/分享。
 
-截图、图像解码、缓存写入、分享租期与取消保持分离。只有选中或导入图片才写私有缓存，只有用户点保存才写相册。未共享会话到期清理，已共享会话保留最长10分钟供读取；进程被杀时不能保证销毁回调，下次启动清理过期文件。FileProvider仅暴露sessions和diagnostics子目录。
+- DouyinTouchHook / HoldGesture：只作用于抖音，不改变事件或宿主返回值、不回放。生命周期/焦点/多指/位移/阈值检查。Activity callback之外的独立弹窗不覆盖。
+- RootBridgeProvider：只接受getPackagesForUid恰好为抖音的UID；开关、白名单、有限坐标、主屏、时间、重复及频率检查。不暴露文件/Intent执行/命令入口。不能区分同UID内模块与宿主代码。
+- RootBridgeAccess：开启时授予抖音空handshake URI读取权以建立Android11+包可见性；只准该路径授权，Provider不实现读取。关闭撤销，应用启动重建。
+- RootCommentCapture：只命中已知评论行内desc图片/图片表情，过滤不可见/越界/头像/菜单，限定主屏无放大，截图前后复核窗口与区域。已过时/多个目标拒绝。日志中的ScreenshotResult时间是返回时序诊断，不等于精确像素帧时间。
+- 不注入system_server/SystemUI，不修改焦点签名校验；已验证可显示的Android16官方系统入口继续保留。研究理由见ROOT_RESEARCH.md。
 
-当前已知评论行id/fmu上下文来自设备日志，图片祖先关系仍需真机验证；不满足则阻断，不泛化为所有ImageView。节点bounds不是原触点。自动长按、自动第三方保存、外部MediaStore原文件关联、视频提取和官方文件拖拽仍未启用。
+## 公共与免 Root
+
+MainActivity提供设置、手动入口和诊断；PortalAccessibilityService负责服务状态和有界白名单节点读取。CommentImagePicker由用户主动截取后选图，PhotoImport处理系统选择器授权URI。NativeLiveUpdates使用Android16公开持续通知提升请求；PortalDisplay保留小米焦点协议探针，移除自绘岛。
+
+AlbumSaveReceiver用非导出广播PendingIntent处理用户保存，不打开Activity；MediaSessions负责私有JPEG、MediaStore pending写入与失败回滚、重复保护和分享租期。Sharing/ShareActivity维护固定目标和ACTION_SEND。Diagnostics保存S0～S7、最近200行、可选树与分组菜单证据。
+
+所有路径都不自动点抖音“保存”。Root截图仅当前帧，不恢复原图/视频/GIF。主应用无网络、悬浮窗、前台服务权限；不上传图片/触摸/日志。缓存最多10分钟读取租期，进程被杀后下次启动清理。取消、替换请求和断开服务使旧任务失效，显示失败只记录原因。
+
+## 未证实假设
+
+当前抖音评论行id/fmu的祖先关系、callback实际实现、LSPosed在目标HyperOS版本的注入、主屏坐标一致性、菜单前成像时序、官方岛在本版本全链路显示均待设备验证。API文档和本地测试只验证可调用结构/规则，不能替代这些事实。

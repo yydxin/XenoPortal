@@ -7,20 +7,10 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.graphics.BitmapFactory
-import android.graphics.Color
-import android.graphics.PixelFormat
-import android.graphics.drawable.GradientDrawable
 import android.graphics.drawable.Icon
 import android.net.Uri
 import android.os.Bundle
 import android.provider.Settings
-import android.view.Gravity
-import android.view.WindowManager
-import android.widget.Button
-import android.widget.HorizontalScrollView
-import android.widget.ImageView
-import android.widget.LinearLayout
-import android.widget.TextView
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -82,16 +72,15 @@ object PortalDisplay {
         query(c) {
             if (generation != request || !Preferences.enabled(c) || MediaSessions.current?.id != session.id) return@query
             close(c)
-            if (officialOnly || (!Preferences.forceOverlay(c) && probe.notifications && probe.permission == true && probe.protocol >= 2)) {
+            if (officialOnly || (probe.notifications && probe.permission == true && probe.protocol >= 2)) {
                 if (!probe.notifications) { Diagnostics.stage(5, "阻断", "通知权限/渠道关闭，请先授权"); return@query }
                 try {
                     official(c, session, observationSeconds)
                     visible = "官方探针已提交，是否上岛待人工确认"
                 } catch (e: Exception) {
                     Diagnostics.exception(5, "通知构建/发送", e)
-                    if (!officialOnly) showOverlay(c, session)
                 }
-            } else showOverlay(c, session)
+            } else Diagnostics.stage(5,"阻断",ProbePolicy.displayRoute(probe.protocol,probe.permission,probe.notifications))
             if (visible != "未显示") {
                 expiration = Runnable {
                     close(c); MediaSessions.discardIfUnshared(c, session.id)
@@ -176,36 +165,8 @@ object PortalDisplay {
         },500)
 
     }
-    private fun showOverlay(c: Context, session: MediaSession) {
-        val service = PortalAccessibilityService.active
-        if (service == null) { Diagnostics.stage(5, "阻断", "需无障碍服务实际连接才能显示覆盖窗口；通知探测=${probe.detail}"); return }
-        try {
-            val density = service.resources.displayMetrics.density
-            fun dp(n: Int) = (n*density).toInt()
-            val panel = LinearLayout(service).apply {
-                orientation = LinearLayout.VERTICAL; setPadding(dp(16), dp(12), dp(16), dp(12))
-                background = GradientDrawable().apply { setColor(Color.rgb(20,25,32)); cornerRadius = dp(28).toFloat() }
-            }
-            val titleRow = LinearLayout(service).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL }
-            titleRow.addView(ImageView(service).apply { setImageBitmap(BitmapFactory.decodeFile(session.file.path)); scaleType = ImageView.ScaleType.CENTER_CROP }, LinearLayout.LayoutParams(dp(48),dp(48)))
-            titleRow.addView(TextView(service).apply { text = service.getString(R.string.overlay_title); setTextColor(Color.WHITE); setPadding(dp(12),0,0,0) }, LinearLayout.LayoutParams(0,dp(52),1f))
-            titleRow.addView(Button(service).apply { text="关闭"; setOnClickListener { close(c); MediaSessions.discardIfUnshared(c,session.id) } })
-            panel.addView(titleRow)
-            val row = LinearLayout(service).apply { orientation = LinearLayout.HORIZONTAL }
-            Sharing.installed(c).forEach { target -> row.addView(Button(service).apply { text = target.name; setOnClickListener { open(service, session, target.id, "accessibility-overlay") } }) }
-            panel.addView(HorizontalScrollView(service).apply { addView(row) })
-            val width = (service.resources.displayMetrics.widthPixels - dp(24)).coerceAtLeast(dp(200))
-            val params = WindowManager.LayoutParams(width, WindowManager.LayoutParams.WRAP_CONTENT, WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY,
-                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL, PixelFormat.TRANSLUCENT).apply {
-                gravity = Gravity.TOP or Gravity.CENTER_HORIZONTAL; y=dp(36)
-            }
-            service.attachOverlayWindow(panel, params)
-            visible = "自绘岛（无障碍覆盖窗口）"
-            lastSubmission = "无障碍覆盖窗口 session=${session.id}"
-            Diagnostics.stage(5, "已显示请求", "${ProbePolicy.displayRoute(probe.protocol,probe.permission,probe.notifications,Preferences.forceOverlay(c))}；addView未抛异常，实际可见性需人工确认")
-        } catch (e: Exception) { Diagnostics.exception(5, "无障碍覆盖窗口", e) }
-    }
     fun close(c: Context) {
+        RootCommentCapture.cancel()
         NativeLiveUpdates.cancel(c)
         PortalAccessibilityService.active?.commentPicker?.cancel()
         generation++ // Invalidates any in-flight asynchronous show request.

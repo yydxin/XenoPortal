@@ -24,6 +24,7 @@ class PortalApp : Application() {
             previous?.uncaughtException(thread, error)
         }
         MediaSessions.cleanup(this)
+        RootBridgeAccess.refresh(this)
     }
 }
 
@@ -83,7 +84,7 @@ object Diagnostics {
         }
     }
     fun textReport(): String = stages.entries.joinToString("\n") { "S${it.key} ${it.value}" } +
-        "\n\n" + lines.joinToString("\n") +
+        "\n\nRoot 模块连接\n" + RootBridgeStatus.status + "\n\n" + lines.joinToString("\n") +
         "\n\n最近窗口采样尝试\n" + treeAttempt +
         "\n\n最近成功读取的白名单窗口快照（以快照时间为准）\n" + tree +
         "\n\n最近菜单候选快照（不能证明长按来源）\n" + menuTree + "\n\n" + DouyinMenuTrials.report()
@@ -116,7 +117,7 @@ object Preferences {
     private fun prefs(c: Context) = c.getSharedPreferences("portal", Context.MODE_PRIVATE)
     fun enabled(c: Context) = prefs(c).getBoolean("enabled", false)
     fun treeEnabled(c: Context) = prefs(c).getBoolean("tree", false)
-    fun forceOverlay(c: Context) = prefs(c).getBoolean("overlay", false)
+    fun rootEnabled(c: Context) = prefs(c).getBoolean("root_touch", false)
     fun set(c: Context, key: String, value: Boolean) { prefs(c).edit().putBoolean(key, value).apply() }
     fun whitelistText(c: Context) = prefs(c).getString("whitelist", "com.ss.android.ugc.aweme\ncom.xingin.xhs\ncom.sina.weibo\ncom.tencent.mm")!!
     fun whitelist(c: Context) = whitelistText(c).lineSequence().map { it.trim() }.filter { it.isNotEmpty() }.toSet()

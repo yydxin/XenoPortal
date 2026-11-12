@@ -73,7 +73,8 @@ private fun PortalScreen(activity: MainActivity, revision: Int) {
     var tab by remember { mutableIntStateOf(0) }
     var enabled by remember(revision) { mutableStateOf(Preferences.enabled(activity)) }
     var trees by remember(revision) { mutableStateOf(Preferences.treeEnabled(activity)) }
-    var overlay by remember(revision) { mutableStateOf(Preferences.forceOverlay(activity)) }
+    var rootTouch by remember(revision) { mutableStateOf(Preferences.rootEnabled(activity)) }
+    var threshold by remember(revision) { mutableIntStateOf(Preferences.threshold(activity)) }
     var whitelist by remember { mutableStateOf(Preferences.whitelistText(activity)) }
     var treeWarning by remember { mutableStateOf(false) }
     var exportWarning by remember { mutableStateOf(false) }
@@ -83,7 +84,7 @@ private fun PortalScreen(activity: MainActivity, revision: Int) {
         if(uri!=null) PhotoImport.load(activity,uri)
     }
     fun changeEnabled(value:Boolean) {
-        enabled=value;Preferences.set(activity,"enabled",value)
+        enabled=value;Preferences.set(activity,"enabled",value);RootBridgeAccess.refresh(activity)
         if(!value) {DouyinMenuTrials.finish("总开关关闭");PortalActions.cancel();PortalDisplay.close(activity);Preferences.set(activity,"tree",false);trees=false;Diagnostics.updateTree("总开关关闭，已清除文字树预览")}
     }
     val permissions = rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { result ->
@@ -94,7 +95,7 @@ private fun PortalScreen(activity: MainActivity, revision: Int) {
         Column(Modifier.safeDrawingPadding()) {
             Column(Modifier.padding(horizontal=20.dp, vertical=12.dp)) {
                 Text("XenoPortal", style=MaterialTheme.typography.headlineLarge)
-                Text("${BuildConfig.VERSION_NAME} · 手动选图测试版", style=MaterialTheme.typography.bodyMedium)
+                Text("${BuildConfig.VERSION_NAME} · Root 长按实验版", style=MaterialTheme.typography.bodyMedium)
             }
             PrimaryTabRow(selectedTabIndex=tab) {
                 listOf("开始", "设置", "诊断", "开发工具").forEachIndexed { index, label -> Tab(selected=tab==index, onClick={tab=index}, text={Text(label)}) }
@@ -102,11 +103,14 @@ private fun PortalScreen(activity: MainActivity, revision: Int) {
             Column(Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(20.dp), verticalArrangement=Arrangement.spacedBy(12.dp)) {
                 when (tab) {
                     0 -> {
-                        Text("选一张图片，保存或分享",style=MaterialTheme.typography.titleLarge)
-                        Text("本版先提供手动取图。自动长按触发正在开发，尚未启用。")
+                        Text("长按评论图片，呼出系统岛",style=MaterialTheme.typography.titleLarge)
+                        Text("Root / LSPosed 路线需要先在设置中启用模块。仅支持抖音评论图片与表情包当前帧；截图时机和机型兼容性待实测。")
                         Toggle("启用 XenoPortal", "内容留在本机，只有主动保存或分享才交给对应位置",enabled,::changeEnabled)
+                        Text(if(rootTouch) "Root 触发已开启；还需在 LSPosed 中勾选抖音并重启抖音" else "Root 触发尚未开启，可前往设置；免 Root 可继续手动选图")
+                        Text(RootBridgeStatus.status,style=MaterialTheme.typography.bodySmall)
+                        OutlinedButton(onClick={tab=1},modifier=Modifier.fillMaxWidth()) {Text("Root 模块与授权设置")}
                         Card(Modifier.fillMaxWidth()) {Column(Modifier.padding(16.dp),verticalArrangement=Arrangement.spacedBy(8.dp)) {
-                            Text("抖音评论图片",style=MaterialTheme.typography.titleMedium)
+                            Text("手动取图（免 Root）",style=MaterialTheme.typography.titleMedium)
                             Text("先准备好评论列表。点击开始后，5秒内切回抖音，关闭菜单并停止滚动，再从预览中点选图片。表情包仅截当前帧。")
                             Text(if(PortalAccessibilityService.active!=null) "无障碍服务已连接" else "需要先在设置中连接无障碍服务")
                             Button(onClick={PortalActions.commentAfterDelay(activity)},enabled=enabled && PortalAccessibilityService.active!=null,modifier=Modifier.fillMaxWidth()) {Text("开始选取评论图片（5秒后）")}
@@ -130,7 +134,7 @@ private fun PortalScreen(activity: MainActivity, revision: Int) {
                         Card { Column(Modifier.padding(16.dp), verticalArrangement=Arrangement.spacedBy(8.dp)) {
                             Text("连接与显示", style=MaterialTheme.typography.titleLarge)
                             Text(if (PortalAccessibilityService.active != null) "无障碍服务：已连接" else "无障碍服务：未连接")
-                            Text(ProbePolicy.displayRoute(PortalDisplay.probe.protocol,PortalDisplay.probe.permission,PortalDisplay.probe.notifications,overlay))
+                            Text(ProbePolicy.displayRoute(PortalDisplay.probe.protocol,PortalDisplay.probe.permission,PortalDisplay.probe.notifications))
                             Text(PortalDisplay.probe.detail, style=MaterialTheme.typography.bodySmall)
                             Text("当前窗口：${PortalDisplay.visible}")
                             Text("最近请求：${PortalDisplay.lastSubmission}")
@@ -140,8 +144,19 @@ private fun PortalScreen(activity: MainActivity, revision: Int) {
                             Text(NativeLiveUpdates.status)
                             Text(NativeLiveUpdates.observation)
                         } }
-                        Toggle("总开关", "开启手动取图与分享；不会自动点抖音保存",enabled,::changeEnabled)
-                        Toggle("强制使用自绘岛", "仅影响旧焦点协议测试入口；首页官方系统岛入口不会自动改为自绘", overlay) { overlay=it; Preferences.set(activity,"overlay",it) }
+                        Toggle("总开关", "开启取图与分享；不会自动点抖音保存",enabled,::changeEnabled)
+                        Text("Root / LSPosed · 实验触发",style=MaterialTheme.typography.titleLarge)
+                        Text("在 LSPosed 中启用 XenoPortal，只勾选抖音（com.ss.android.ugc.aweme），然后强制停止并重新打开抖音。不需要勾选系统框架或 SystemUI。更新模块后也要重启抖音。")
+                        Toggle("Root 长按截图", "默认关闭。只观察抖音单指长按，不拦截或重放手势；需要无障碍服务完成定位和截图。",rootTouch) {
+                            rootTouch=it;Preferences.set(activity,"root_touch",it);RootBridgeAccess.refresh(activity)
+                            if(!it) RootCommentCapture.cancel()
+                            Diagnostics.stage(3,if(it) "等待模块" else "已关闭",if(it) "Root 触发已开启；切到抖音等待模块连接，连接后才可能取图" else "Root 长按已关闭")
+                        }
+                        Text("长按阈值：${threshold} ms（250–500 ms）")
+                        Slider(value=threshold.toFloat(),onValueChange={threshold=it.toInt()},onValueChangeFinished={Preferences.threshold(activity,threshold)},valueRange=250f..500f,steps=4)
+                        Text("修改后切回抖音重新进入页面以刷新设置。判定后还需要截图时间；出现菜单、目标不明或延迟太长会停止，不能保证未压暗。")
+                        Text(RootBridgeStatus.status,style=MaterialTheme.typography.bodySmall)
+                        Text("仅官方系统岛；不可用时显示诊断，不再转为自绘岛。免 Root 手动选图仍有临时选图面板，它不是岛。")
                         Text("权限向导", style=MaterialTheme.typography.titleLarge)
                         OutlinedButton(onClick={activity.openSettings(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))}, Modifier.fillMaxWidth()) { Text("打开无障碍设置") }
                         Text("侧载安装后如系统禁止启用：应用信息 → 右上角菜单 → 允许受限制的设置；是否出现该项取决于系统。应用无法可靠判断具体拦截原因。")
@@ -155,10 +170,10 @@ private fun PortalScreen(activity: MainActivity, revision: Int) {
                         OutlinedButton(onClick={activity.openSettings(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,Uri.parse("package:${activity.packageName}")))}, Modifier.fillMaxWidth()) { Text("应用信息 / 自启动 / 后台与省电设置") }
                         Text("HyperOS 中按需要手动检查自启动、后台弹出界面与电池无限制；入口随系统版本变化。服务被终止时，设置页与 S0 会提示未连接。")
                         HorizontalDivider()
-                        Text("取图模式：手动选择图片", style=MaterialTheme.typography.titleLarge)
-                        Text("本版支持评论列表手动选图截图、系统照片选择。自动长按、自动点保存、原文件与视频提取尚未启用；不申请触摸探索或回放手势。")
+                        Text("取图范围", style=MaterialTheme.typography.titleLarge)
+                        Text("Root：真实触点命中评论图片后裁剪屏幕。免 Root：手动选图、系统照片选择。均为静态图片；不提取原视频或动态表情文件，不自动点保存，不申请触摸探索。")
                         OutlinedTextField(value=whitelist,onValueChange={whitelist=it},label={Text("事件白名单（每行一个包名）")},modifier=Modifier.fillMaxWidth(),minLines=4)
-                        Button(onClick={Preferences.whitelist(activity,whitelist); Diagnostics.log("CONFIG","已保存白名单，共${Preferences.whitelist(activity).size}项")}) { Text("保存白名单") }
+                        Button(onClick={Preferences.whitelist(activity,whitelist); RootBridgeAccess.refresh(activity); Diagnostics.log("CONFIG","已保存白名单，共${Preferences.whitelist(activity).size}项")}) { Text("保存白名单") }
                         Text("分享目标固定顺序", style=MaterialTheme.typography.titleLarge)
                         Sharing.targets.forEach { target -> Text("${Sharing.targets.indexOf(target)+1}. ${target.name} · ${if (target in installed) "已安装/本地功能" else "未安装或设备不可见，分享时隐藏"}") }
                         Text("已安装不代表支持图片/视频 ACTION_SEND。微信/QQ 需要用户选择聊天；互传和 AI 接收能力待真机验证。")
@@ -178,7 +193,7 @@ private fun PortalScreen(activity: MainActivity, revision: Int) {
                             OutlinedButton(onClick={activity.openSettings(NativeLiveUpdates.settingsIntent(activity))},Modifier.fillMaxWidth()) { Text("检查系统实时通知权限") }
                             Text(NativeLiveUpdates.status)
                             Text(NativeLiveUpdates.observation,style=MaterialTheme.typography.bodySmall)
-                            Button(onClick={PortalDisplay.show(activity)}, enabled=enabled,modifier=Modifier.fillMaxWidth()) { Text("原有显示路径（小米焦点协议 / 自绘）") }
+                            Button(onClick={PortalDisplay.show(activity)}, enabled=enabled,modifier=Modifier.fillMaxWidth()) { Text("检查小米焦点协议并提交") }
                             OutlinedButton(onClick={PortalDisplay.show(activity,officialOnly=true)},enabled=enabled,modifier=Modifier.fillMaxWidth()) { Text("单独发送官方探针（观察是否退化）") }
                             OutlinedButton(onClick={PortalActions.officialAfterDelay(activity)},enabled=enabled,modifier=Modifier.fillMaxWidth()) { Text("5秒后测试官方超级岛（先返回桌面）") }
                             Text("延时官方测试显示30秒，并在发送500ms后检查系统是否登记通知。其他显示测试8秒收起。没有登记平台 App Id，仍可能被系统鉴权拒绝；不会把普通通知当作上岛成功。")
@@ -209,6 +224,7 @@ private fun PortalScreen(activity: MainActivity, revision: Int) {
                     }
                     2 -> {
                         Text("定位停在哪个阶段", style=MaterialTheme.typography.titleLarge)
+                        Text(RootBridgeStatus.status,style=MaterialTheme.typography.bodySmall)
                         val names = listOf("服务连接","任意事件","白名单","长按 / 菜单候选","获取内容","显示提交","按钮回调","分享启动")
                         (0..7).forEach { index ->
                             val stage=Diagnostics.stages.getValue(index)
@@ -263,7 +279,7 @@ private fun Toggle(title: String, detail: String, value: Boolean, change: (Boole
 
 object PortalActions {
     private var pending: Runnable? = null
-    fun cancel() { pending?.let(Diagnostics.main::removeCallbacks); pending=null; PortalAccessibilityService.active?.commentPicker?.cancel() }
+    fun cancel() { RootCommentCapture.cancel(); pending?.let(Diagnostics.main::removeCallbacks); pending=null; PortalAccessibilityService.active?.commentPicker?.cancel() }
     fun commentAfterDelay(context:android.content.Context) {
         cancel()
         if(!Preferences.enabled(context) || PortalAccessibilityService.active==null) {Diagnostics.stage(4,"阻断","先开启总开关并连接无障碍服务");return}

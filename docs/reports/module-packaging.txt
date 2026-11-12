@@ -1,0 +1,5 @@
+assets/xposed_init=PASS
+Root hook class in dex=PASS
+Xposed API implementation absent from dex (compileOnly)=PASS
+APK ZIP CRC=PASS
+VersionCode=206

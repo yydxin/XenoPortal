@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.xeno.portal.RootBridgeTest" tests="3" skipped="0" failures="0" errors="0" timestamp="2026-11-12T14:45:57.918Z" hostname="f4aded875f45" time="0.229">
+  <properties/>
+  <testcase name="exclusiveHostUidRequired" classname="com.xeno.portal.RootBridgeTest" time="0.029"/>
+  <testcase name="rejectsStaleFutureShortAndMismatchedCoordinates" classname="com.xeno.portal.RootBridgeTest" time="0.031"/>
+  <testcase name="authorizedMessagesAreGatedDeduplicatedAndDoNotStartActivities" classname="com.xeno.portal.RootBridgeTest" time="0.132"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>
